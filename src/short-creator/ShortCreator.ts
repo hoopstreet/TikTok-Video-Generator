@@ -613,10 +613,10 @@ export class ShortCreator {
           });
         });
 
-        request.setTimeout(30000, () => {
+        request.setTimeout(120000, () => {
           request.destroy();
           fs.unlink(outputPath, () => {});
-          reject(new Error("Download timeout after 30s"));
+          reject(new Error("Download timeout after 120s"));
         });
 
         request.on("error", (error: any) => {
