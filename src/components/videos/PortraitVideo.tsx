@@ -91,6 +91,13 @@ export const PortraitVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
           >
             <OffthreadVideo src={video} muted />
             <Audio src={audio.url} />
+            {scene.sfx && (
+              <Audio 
+                src={scene.sfx.url} 
+                volume={0.3}
+                startFrom={0}
+              />
+            )}
             
             {/* Show specs overlay on first scene (question) */}
             {i === 0 && questionVideoData && (

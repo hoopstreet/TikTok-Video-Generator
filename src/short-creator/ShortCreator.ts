@@ -195,12 +195,35 @@ export class ShortCreator {
         outputPath: tempVideoFromImagePath 
       }, "Created video from Pollinations AI image");
 
+      // Add SFX for each scene (use manual sfxId if provided, otherwise auto-assign)
+      const sfxFiles = [
+        "airbus-cabin-pa-beep-tone-passenger-announcement-chime-358248.mp3",
+        "automobile-horn-2-352065.mp3", 
+        "beep-beep-101391.mp3",
+        "car-engine-roaring-376881.mp3",
+        "double-car-horn-352443.mp3",
+        "fast-car-passing-sound-395038.mp3",
+        "fast-swish-transition-noise-352756.mp3",
+        "open-car-door-372469.mp3",
+        "soft-shwaw-sweep-airy-transition-sound-348832.mp3",
+        "swish-sound-94707.mp3",
+        "swoosh-015-383769.mp3",
+        "tear-a-paper-328149.mp3"
+      ];
+      
+      // Use manual sfxId if provided, otherwise auto-assign
+      const sfxId = scene.sfxId || ((index % 12) + 1);
+      
       scenes.push({
         captions,
         video: videoUrl,
         audio: {
           url: `http://localhost:${this.config.port}/api/tmp/${tempMp3FileName}`,
           duration: audioLength,
+        },
+        sfx: {
+          url: `http://localhost:${this.config.port}/api/sfx/${sfxFiles[sfxId - 1]}`,
+          id: sfxId,
         },
       });
 

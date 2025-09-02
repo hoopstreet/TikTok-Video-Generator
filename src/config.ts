@@ -38,6 +38,7 @@ export class Config {
   public tempDirPath: string;
   public packageDirPath: string;
   public musicDirPath: string;
+  public sfxDirPath: string;
   public pexelsApiKey: string;
   public logLevel: pino.Level;
   public whisperVerbose: boolean;
@@ -75,6 +76,7 @@ export class Config {
     this.packageDirPath = path.join(__dirname, "..");
     this.staticDirPath = path.join(this.packageDirPath, "static");
     this.musicDirPath = path.join(this.staticDirPath, "music");
+    this.sfxDirPath = path.join(this.staticDirPath, "sfx");
 
     this.pexelsApiKey = process.env.PEXELS_API_KEY as string;
     this.logLevel = (process.env.LOG_LEVEL || defaultLogLevel) as pino.Level;

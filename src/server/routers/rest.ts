@@ -240,6 +240,35 @@ export class APIRouter {
     );
 
     this.router.get(
+      "/sfx/:fileName",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        const { fileName } = req.params;
+        if (!fileName) {
+          res.status(400).json({
+            error: "fileName is required",
+          });
+          return;
+        }
+        const sfxFilePath = path.join(this.config.sfxDirPath, fileName);
+        if (!fs.existsSync(sfxFilePath)) {
+          res.status(404).json({
+            error: "sfx file not found",
+          });
+          return;
+        }
+        const sfxFileStream = fs.createReadStream(sfxFilePath);
+        sfxFileStream.on("error", (error) => {
+          logger.error(error, "Error reading sfx file");
+          res.status(500).json({
+            error: "Error reading sfx file",
+            fileName,
+          });
+        });
+        sfxFileStream.pipe(res);
+      },
+    );
+
+    this.router.get(
       "/short-video/:videoId",
       (req: ExpressRequest, res: ExpressResponse) => {
         try {

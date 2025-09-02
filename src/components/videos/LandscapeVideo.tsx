@@ -91,6 +91,13 @@ export const LandscapeVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
           >
             <OffthreadVideo src={video} muted />
             <Audio src={audio.url} />
+            {scene.sfx && (
+              <Audio 
+                src={scene.sfx.url} 
+                volume={0.3}
+                startFrom={0}
+              />
+            )}
             
 
             

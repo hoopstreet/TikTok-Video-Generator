@@ -15,6 +15,21 @@ export enum MusicMoodEnum {
   funny = "funny/quirky",
 }
 
+export enum SFXEnum {
+  airbus_cabin_pa_beep = "airbus-cabin-pa-beep-tone-passenger-announcement-chime-358248.mp3",
+  automobile_horn_2 = "automobile-horn-2-352065.mp3",
+  beep_beep = "beep-beep-101391.mp3",
+  car_engine_roaring = "car-engine-roaring-376881.mp3",
+  double_car_horn = "double-car-horn-352443.mp3",
+  fast_car_passing = "fast-car-passing-sound-395038.mp3",
+  fast_swish_transition = "fast-swish-transition-noise-352756.mp3",
+  open_car_door = "open-car-door-372469.mp3",
+  soft_shwaw_sweep = "soft-shwaw-sweep-airy-transition-sound-348832.mp3",
+  swish_sound = "swish-sound-94707.mp3",
+  swoosh_015 = "swoosh-015-383769.mp3",
+  tear_a_paper = "tear-a-paper-328149.mp3",
+}
+
 export enum CaptionPositionEnum {
   top = "top",
   center = "center",
@@ -27,6 +42,10 @@ export type Scene = {
   audio: {
     url: string;
     duration: number;
+  };
+  sfx?: {
+    url: string;
+    id: number; // 1-12 for alphabetical order
   };
 };
 
@@ -42,6 +61,13 @@ export const sceneInput = z.object({
     .enum(["pexels", "pollinations"])
     .optional()
     .describe("Video source provider. 'pexels' for Pexels videos, 'pollinations' for Pollinations AI images. Defaults to 'pollinations' if not specified."),
+  sfxId: z
+    .number()
+    .int()
+    .min(1)
+    .max(12)
+    .optional()
+    .describe("SFX ID to use for this scene (1-12). If not specified, will be assigned automatically."),
 });
 export type SceneInput = z.infer<typeof sceneInput>;
 
