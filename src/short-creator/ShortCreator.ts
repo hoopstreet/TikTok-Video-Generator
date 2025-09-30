@@ -546,7 +546,10 @@ export class ShortCreator {
 
   private async convertImageToVideo(imagePath: string, outputPath: string, durationSeconds: number): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      logger.debug({ imagePath, outputPath, durationSeconds }, "Converting image to video");
+      // Pad duration to ensure Remotion compositor can fetch the last frame without off-by-one
+      const fps = 30;
+      const paddedDuration = Math.ceil(durationSeconds * fps) / fps + 0.1;
+      logger.debug({ imagePath, outputPath, durationSeconds, paddedDuration }, "Converting image to video");
       
       const ffmpeg = require('fluent-ffmpeg');
       
@@ -554,17 +557,17 @@ export class ShortCreator {
       ffmpeg(imagePath)
         .inputOptions([
           '-loop 1', // Loop the image
-          `-t ${durationSeconds}` // Set exact duration
+          `-t ${paddedDuration}` // Set duration with slight padding to avoid last-frame miss
         ])
         .videoCodec('libx264')
         .outputOptions([
           '-pix_fmt yuv420p', // Ensure compatibility
-          '-r 30', // 30 FPS for smoother playback
+          `-r ${fps}`, // Constant FPS
           '-vf scale=1080:1920:flags=lanczos', // High quality scaling
           '-preset ultrafast', // Fast encoding
           '-crf 18', // High quality
           '-movflags +faststart', // Optimize for streaming
-          '-shortest' // End when duration is reached
+          // Do not use -shortest to avoid early cutoffs on some environments
         ])
         .format('mp4')
         .on('start', (commandLine: string) => {

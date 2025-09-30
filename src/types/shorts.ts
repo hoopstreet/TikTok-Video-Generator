@@ -136,9 +136,9 @@ export const renderConfig = z.object({
       "Background color of the caption, a valid css color, default is blue",
     ),
   voice: z
-    .nativeEnum(VoiceEnum)
+    .union([z.nativeEnum(VoiceEnum), z.string()])
     .optional()
-    .describe("Voice to be used for the speech, default is af_heart"),
+    .describe("Voice to be used for the speech. Accepts a predefined voice or a raw ElevenLabs voice ID."),
   orientation: z
     .nativeEnum(OrientationEnum)
     .optional()
@@ -150,7 +150,7 @@ export const renderConfig = z.object({
 });
 export type RenderConfig = z.infer<typeof renderConfig>;
 
-export type Voices = `${VoiceEnum}`;
+export type Voices = `${VoiceEnum}` | string;
 
 export type Video = {
   id: string;

@@ -47,16 +47,20 @@ services:
       context: .
       dockerfile: main.Dockerfile
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - PEXELS_API_KEY=${PEXELS_API_KEY}
       - LANGUAGE=${LANGUAGE:-tr}
-      - WHISPER_MODEL=${WHISPER_MODEL:-large-v3}
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
       - DOCKER=true
+      - DATA_DIR_PATH=/app/data
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - CONCURRENCY=${CONCURRENCY:-1}
       - VIDEO_CACHE_SIZE_IN_BYTES=${VIDEO_CACHE_SIZE_IN_BYTES:-2097152000}
       - PIPER_TTS_URL=http://piper-tts:5001
       - NODE_ENV=production
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
     ports:
       - "3123:3123"
     depends_on:

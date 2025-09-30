@@ -30,15 +30,21 @@ export class Kokoro {
     audio: ArrayBuffer;
     audioLength: number;
   }> {
-    const elevenVoiceId = process.env.ELEVENLABS_VOICE_ID || "";
+    // Allow raw ElevenLabs voice ID via config.voice coming from the request payload
+    // Detect ElevenLabs voice IDs (usually long alphanumeric IDs)
+    const voiceStr = String(voice || '');
+    const isElevenLabsId = /^[A-Za-z0-9_-]{16,}$/i.test(voiceStr);
+    const providedVoiceId = isElevenLabsId ? voiceStr : '';
+    const envVoiceId = process.env.ELEVENLABS_VOICE_ID || "";
+    const elevenVoiceId = providedVoiceId || envVoiceId;
     const useEleven = !!this.eleven && !!(process.env.ELEVENLABS_API_KEY) && !!elevenVoiceId;
 
     if (useEleven && this.eleven) {
       try {
         logger.debug({ text, voice, language: this.language, elevenVoiceId }, "Using ElevenLabs TTS");
-        const enhanced = this.enhanceText(text);
+        // Use raw text for maximum speed (no added pauses)
         const audio = await this.eleven.synthesize({
-          text: enhanced,
+          text: text,
           voiceId: elevenVoiceId,
         });
         // ElevenLabs returns MP3 by default; estimate duration naively assuming 24kbps average ~ 3kB/s
