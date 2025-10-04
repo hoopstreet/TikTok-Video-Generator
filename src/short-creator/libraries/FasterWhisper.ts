@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logger } from "../../config";
+import { withRetry, retryConditions } from "../../utils/retry";
 import { Config } from "../../config";
 import type { Caption } from "../../types/shorts";
 
@@ -95,77 +96,85 @@ export class FasterWhisper {
   }
 
   async transcribe(options: FasterWhisperOptions): Promise<FasterWhisperResponse> {
-    const {
-      audioPath,
-      model = this.config.whisperModel,
-      language = this.config.language || "tr",
-      computeType = "int8", // Default to INT8 for speed and efficiency
-      device = "cpu",
-      numWorkers = 1
-    } = options;
+    return withRetry(async () => {
+      const {
+        audioPath,
+        model = this.config.whisperModel,
+        language = this.config.language || "tr",
+        computeType = "int8", // Default to INT8 for speed and efficiency
+        device = "cpu",
+        numWorkers = 1
+      } = options;
 
-    logger.debug({
-      audioPath,
-      model,
-      language,
-      computeType,
-      device,
-      numWorkers
-    }, "Starting Faster-Whisper transcription");
+      logger.debug({
+        audioPath,
+        model,
+        language,
+        computeType,
+        device,
+        numWorkers
+      }, "Starting Faster-Whisper transcription");
 
-    // Try each URL until one works
-    for (const url of this.fallbackUrls) {
-      try {
-        logger.debug({ url }, "Trying Faster-Whisper server");
+      // Try each URL until one works
+      for (const url of this.fallbackUrls) {
+        try {
+          logger.debug({ url }, "Trying Faster-Whisper server");
 
-        const requestData = {
-          audio_path: audioPath,
-          model,
-          language,
-          compute_type: computeType,
-          device,
-          num_workers: numWorkers
-        };
-
-        const response = await axios.post(
-          `${url}/transcribe`,
-          requestData,
-          {
-            timeout: 120000, // 2 minutes timeout for large audio files
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        if (response.status === 200) {
-          logger.debug({
-            audioPath,
+          const requestData = {
+            audio_path: audioPath,
             model,
             language,
-            segmentCount: response.data.segments?.length || 0,
-            duration: response.data.duration,
-            url
-          }, "Faster-Whisper transcription completed successfully");
+            compute_type: computeType,
+            device,
+            num_workers: numWorkers
+          };
 
-          // Update serverUrl to working one for future requests
-          this.serverUrl = url;
-          return response.data;
+          const response = await axios.post(
+            `${url}/transcribe`,
+            requestData,
+            {
+              timeout: 120000, // 2 minutes timeout for large audio files
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (response.status === 200) {
+            logger.debug({
+              audioPath,
+              model,
+              language,
+              segmentCount: response.data.segments?.length || 0,
+              duration: response.data.duration,
+              url
+            }, "Faster-Whisper transcription completed successfully");
+
+            // Update serverUrl to working one for future requests
+            this.serverUrl = url;
+            return response.data;
+          }
+        } catch (error: any) {
+          logger.warn({ 
+            error: error.message, 
+            url, 
+            audioPath 
+          }, "Failed to transcribe with Faster-Whisper server, trying next URL");
+          continue;
         }
-      } catch (error: any) {
-        logger.warn({ 
-          error: error.message, 
-          url, 
-          audioPath 
-        }, "Failed to transcribe with Faster-Whisper server, trying next URL");
-        continue;
       }
-    }
 
-    // If all URLs failed, throw error
-    const error = new Error(`All Faster-Whisper servers failed. Tried: ${this.fallbackUrls.join(', ')}`);
-    logger.error({ error, options }, "Error transcribing with Faster-Whisper");
-    throw error;
+      // If all URLs failed, throw error
+      const error = new Error(`All Faster-Whisper servers failed. Tried: ${this.fallbackUrls.join(', ')}`);
+      logger.error({ error, options }, "Error transcribing with Faster-Whisper");
+      throw error;
+    }, {
+      maxAttempts: 3,
+      delayMs: 2000,
+      backoffMultiplier: 2,
+      maxDelayMs: 10000,
+      retryCondition: retryConditions.whisper
+    });
   }
 
   async CreateCaption(audioPath: string, originalText?: string, model?: string): Promise<Caption[]> {

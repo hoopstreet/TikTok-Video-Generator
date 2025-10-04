@@ -83,7 +83,7 @@ export class Config {
     this.whisperVerbose = process.env.WHISPER_VERBOSE === "true";
     this.port = process.env.PORT ? parseInt(process.env.PORT) : defaultPort;
     this.runningInDocker = process.env.DOCKER === "true";
-    this.devMode = process.env.DEV === "true";
+    this.devMode = process.env.DEV_MODE === "true";
 
     if (process.env.WHISPER_MODEL) {
       this.whisperModel = process.env.WHISPER_MODEL as whisperModels;

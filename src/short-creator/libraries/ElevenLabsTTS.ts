@@ -1,5 +1,6 @@
 import axios from "axios";
 import { logger } from "../../config";
+import { withRetry, retryConditions } from "../../utils/retry";
 
 export interface ElevenLabsTTSOptions {
   text: string;
@@ -28,48 +29,56 @@ export class ElevenLabsTTS {
   }
 
   async synthesize(options: ElevenLabsTTSOptions): Promise<ArrayBuffer> {
-    const {
-      text,
-      voiceId,
-      modelId = "eleven_v3",
-      stability = 1,
-      similarityBoost = 1,
-      style = 1.0,
-      useSpeakerBoost = true,
-    } = options;
+    return withRetry(async () => {
+      const {
+        text,
+        voiceId,
+        modelId = "eleven_v3",
+        stability = 1,
+        similarityBoost = 1,
+        style = 1.0,
+        useSpeakerBoost = true,
+      } = options;
 
-    // Use the new endpoint format with output_format parameter
-    // Eleven v3 (alpha) supports 70+ languages with enhanced emotional control
-    const url = `${this.baseUrl}/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
+      // Use the new endpoint format with output_format parameter
+      // Eleven v3 (alpha) supports 70+ languages with enhanced emotional control
+      const url = `${this.baseUrl}/text-to-speech/${voiceId}?output_format=mp3_44100_128`;
 
-    const payload = {
-      text,
-      model_id: modelId, // eleven_v3 - latest and most advanced model
-      voice_settings: {
-        stability,
-        similarity_boost: similarityBoost,
-        style,
-        use_speaker_boost: useSpeakerBoost,
-      },
-    };
+      const payload = {
+        text,
+        model_id: modelId, // eleven_v3 - latest and most advanced model
+        voice_settings: {
+          stability,
+          similarity_boost: similarityBoost,
+          style,
+          use_speaker_boost: useSpeakerBoost,
+        },
+      };
 
-    logger.debug({ url, voiceId, modelId }, "Calling ElevenLabs TTS");
+      logger.debug({ url, voiceId, modelId }, "Calling ElevenLabs TTS");
 
-    const response = await axios.post(url, payload, {
-      responseType: "arraybuffer",
-      headers: {
-        "xi-api-key": this.apiKey,
-        "Content-Type": "application/json",
-        Accept: "audio/mpeg",
-      },
-      timeout: 30000,
+      const response = await axios.post(url, payload, {
+        responseType: "arraybuffer",
+        headers: {
+          "xi-api-key": this.apiKey,
+          "Content-Type": "application/json",
+          Accept: "audio/mpeg",
+        },
+        timeout: 30000,
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`ElevenLabs TTS failed with status ${response.status}`);
+      }
+
+      return response.data as ArrayBuffer;
+    }, {
+      maxAttempts: 3,
+      delayMs: 1000,
+      backoffMultiplier: 2,
+      maxDelayMs: 5000,
+      retryCondition: retryConditions.elevenlabs
     });
-
-    if (response.status !== 200) {
-      throw new Error(`ElevenLabs TTS failed with status ${response.status}`);
-    }
-
-    return response.data as ArrayBuffer;
   }
 }
 

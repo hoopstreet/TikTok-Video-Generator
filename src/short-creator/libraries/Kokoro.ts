@@ -47,8 +47,8 @@ export class Kokoro {
           text: text,
           voiceId: elevenVoiceId,
         });
-        // ElevenLabs returns MP3 by default; estimate duration naively assuming 24kbps average ~ 3kB/s
-        const audioLength = (audio.byteLength / 3000);
+        // ElevenLabs returns MP3 by default; calculate duration dynamically using actual bitrate
+        const audioLength = await this.calculateAudioDuration(audio);
         return { audio, audioLength };
       } catch (e) {
         logger.warn({ e }, "ElevenLabs failed, falling back to Piper");
@@ -68,6 +68,40 @@ export class Kokoro {
     } catch (error) {
       logger.error({ error }, "Piper TTS failed");
       throw new Error(`Piper TTS error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Calculate audio duration dynamically using actual bitrate
+  private async calculateAudioDuration(audio: ArrayBuffer): Promise<number> {
+    try {
+      // Create a temporary file to analyze with ffprobe
+      const tempPath = `/tmp/temp_audio_${Date.now()}.mp3`;
+      const fs = require('fs');
+      fs.writeFileSync(tempPath, Buffer.from(audio));
+      
+      // Use ffprobe to get actual duration and bitrate
+      const { execSync } = require('child_process');
+      const ffprobeOutput = execSync(`ffprobe -v quiet -print_format json -show_format "${tempPath}"`, { encoding: 'utf8' });
+      const metadata = JSON.parse(ffprobeOutput);
+      
+      // Clean up temp file
+      fs.unlinkSync(tempPath);
+      
+      const duration = parseFloat(metadata.format.duration);
+      logger.debug({ 
+        fileSize: audio.byteLength, 
+        duration, 
+        bitrate: metadata.format.bit_rate,
+        calculatedDuration: audio.byteLength / (parseInt(metadata.format.bit_rate) / 8)
+      }, "Audio duration calculated dynamically");
+      
+      return duration;
+    } catch (error) {
+      logger.warn({ error }, "Failed to calculate audio duration dynamically, falling back to estimation");
+      // Fallback to improved estimation for ElevenLabs MP3 (128kbps)
+      // ElevenLabs MP3 files are typically 128kbps = 16kB/s
+      // But we need to account for MP3 overhead, so use a slightly lower rate
+      return audio.byteLength / 14000; // More accurate estimation for ElevenLabs MP3
     }
   }
 

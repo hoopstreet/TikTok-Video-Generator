@@ -14,6 +14,7 @@ import { FFMpeg } from "./libraries/FFmpeg";
 import { PexelsAPI } from "./libraries/Pexels";
 import { Config } from "../config";
 import { logger } from "../logger";
+import { withRetry, retryConditions } from "../utils/retry";
 import { MusicManager } from "./music";
 import type {
   SceneInput,
@@ -185,6 +186,13 @@ export class ShortCreator {
       scene2Duration: number;
     },
   ): Promise<string> {
+    // DEV_MODE: Use existing temp files for quick testing
+    logger.debug({ devMode: this.config.devMode, envDevMode: process.env.DEV_MODE }, "Checking DEV_MODE status");
+    if (this.config.devMode) {
+      logger.debug({ videoId, sceneCount: inputScenes.length }, "DEV_MODE is active, using existing temp files");
+      return this.createShortDevMode(videoId, inputScenes, config, skipCaptions, questionVideoData);
+    }
+
     // Pre-flight check: ensure Faster-Whisper is working before using paid services
     await this.performPreFlightChecks(skipCaptions);
     
@@ -734,29 +742,37 @@ export class ShortCreator {
   }
 
   private async generateOpenAIImage(prompt: string, outputPath: string): Promise<void> {
-    const apiKey = process.env.OPENAI_API_KEY as string;
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY not set');
-    }
-    // OpenAI Images API compatible request
-    const body = {
-      model: 'gpt-image-1',
-      prompt,
-      size: '1024x1536', // portrait format for GPT-Image-1 (supported sizes: 1024x1024, 1024x1536, 1536x1024)
-      quality: 'high' // GPT-Image-1 supports: auto, high, medium, low
-    };
-    const res = await axios.post('https://api.openai.com/v1/images/generations', body, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      timeout: 180000, // 2 minutes timeout for GPT-Image-1
+    return withRetry(async () => {
+      const apiKey = process.env.OPENAI_API_KEY as string;
+      if (!apiKey) {
+        throw new Error('OPENAI_API_KEY not set');
+      }
+      // OpenAI Images API compatible request
+      const body = {
+        model: 'gpt-image-1',
+        prompt,
+        size: '1024x1536', // portrait format for GPT-Image-1 (supported sizes: 1024x1024, 1024x1536, 1536x1024)
+        quality: 'high' // GPT-Image-1 supports: auto, high, medium, low
+      };
+      const res = await axios.post('https://api.openai.com/v1/images/generations', body, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        timeout: 180000, // 2 minutes timeout for GPT-Image-1
+      });
+      const b64 = res.data?.data?.[0]?.b64_json as string;
+      if (!b64) throw new Error('OpenAI did not return image');
+      const buffer = Buffer.from(b64, 'base64');
+      fs.writeFileSync(outputPath, buffer);
+      logger.debug({ outputPath, prompt }, 'OpenAI image saved');
+    }, {
+      maxAttempts: 3,
+      delayMs: 2000,
+      backoffMultiplier: 2,
+      maxDelayMs: 10000,
+      retryCondition: retryConditions.openai
     });
-    const b64 = res.data?.data?.[0]?.b64_json as string;
-    if (!b64) throw new Error('OpenAI did not return image');
-    const buffer = Buffer.from(b64, 'base64');
-    fs.writeFileSync(outputPath, buffer);
-    logger.debug({ outputPath, prompt }, 'OpenAI image saved');
   }
 
   // Test helpers
@@ -830,5 +846,141 @@ export class ShortCreator {
     logger.debug({ tempMp3FileName, duration, audioSize: audio.byteLength }, "ElevenLabs TTS test completed");
     
     return { tmpMp3: tempMp3FileName, duration };
+  }
+
+  private async createShortDevMode(
+    videoId: string,
+    inputScenes: SceneInput[],
+    config: RenderConfig,
+    skipCaptions?: boolean,
+    questionVideoData?: {
+      specs: string[];
+      unknownSpec: string;
+      answer: string;
+      scene1Duration: number;
+      scene2Duration: number;
+    },
+  ): Promise<string> {
+    logger.debug({ videoId, sceneCount: inputScenes.length }, "Creating video in DEV_MODE using existing temp files");
+    
+    const scenes: Scene[] = [];
+    let totalDuration = 0;
+    const tempFiles = [];
+
+    const orientation: OrientationEnum = config.orientation || OrientationEnum.portrait;
+
+    // Get existing temp files
+    const existingAudioFiles = await this.getExistingTempFiles('*.mp3');
+    const existingImageFiles = await this.getExistingTempFiles('*.png');
+    
+    logger.debug({ 
+      audioFiles: existingAudioFiles.length, 
+      imageFiles: existingImageFiles.length 
+    }, "Found existing temp files for DEV_MODE");
+
+    for (let index = 0; index < inputScenes.length; index++) {
+      // Use random existing audio file
+      const randomAudioFile = existingAudioFiles[Math.floor(Math.random() * existingAudioFiles.length)];
+      const randomImageFile = existingImageFiles[Math.floor(Math.random() * existingImageFiles.length)];
+      
+      // Calculate audio duration dynamically
+      const audioDuration = await this.getAudioDuration(randomAudioFile);
+      
+      // Create video from existing image
+      const tempVideoFileName = `${cuid()}.mp4`;
+      const tempVideoPath = path.join(this.config.tempDirPath, tempVideoFileName);
+      const tempVideoFromImagePath = tempVideoPath.replace('.mp4', '_from_image.mp4');
+      
+      await this.convertImageToVideo(randomImageFile, tempVideoFromImagePath, audioDuration);
+      
+      // Add to cleanup
+      tempFiles.push(tempVideoFromImagePath);
+      
+      // Use local HTTP server for OffthreadVideo
+      const videoUrl = `http://localhost:${this.config.port}/api/tmp/${tempVideoFileName.replace('.mp4', '_from_image.mp4')}`;
+      const audioUrl = `http://localhost:${this.config.port}/api/tmp/${path.basename(randomAudioFile)}`;
+      
+      logger.debug({ 
+        audioFile: path.basename(randomAudioFile),
+        imageFile: path.basename(randomImageFile),
+        duration: audioDuration,
+        index 
+      }, "Using existing temp files for scene");
+
+      scenes.push({
+        captions: [], // Skip captions in dev mode
+        video: videoUrl,
+        audio: {
+          url: audioUrl,
+          duration: audioDuration,
+        },
+      });
+
+      totalDuration += audioDuration;
+    }
+
+    // Add padding to last scene if specified
+    if (config.paddingBack) {
+      totalDuration += config.paddingBack / 1000;
+    }
+
+    const selectedMusic = this.findMusic(totalDuration, config.music);
+    logger.debug({ selectedMusic }, "Selected music for DEV_MODE video");
+
+    await this.remotion.render(
+      {
+        music: selectedMusic,
+        scenes,
+        config: {
+          durationMs: totalDuration * 1000,
+          paddingBack: config.paddingBack,
+          ...{
+            captionBackgroundColor: config.captionBackgroundColor,
+            captionPosition: config.captionPosition,
+          },
+          musicVolume: config.musicVolume,
+        },
+        questionVideoData,
+      },
+      videoId,
+      orientation,
+    );
+
+    // Clean up temp files
+    for (const file of tempFiles) {
+      fs.removeSync(file);
+    }
+
+    logger.debug({ videoId, totalDuration }, "DEV_MODE video created successfully");
+    return videoId;
+  }
+
+  private async getExistingTempFiles(pattern: string): Promise<string[]> {
+    const fs = require('fs');
+    const glob = require('glob');
+    
+    try {
+      const files = glob.sync(path.join(this.config.tempDirPath, pattern));
+      return files.filter((file: string) => {
+        // Filter out pollinations files and check if file exists
+        const fileName = path.basename(file);
+        return fs.existsSync(file) && !fileName.includes('pollinations');
+      });
+    } catch (error) {
+      logger.warn({ error, pattern }, "Failed to get existing temp files");
+      return [];
+    }
+  }
+
+  private async getAudioDuration(audioPath: string): Promise<number> {
+    try {
+      const { execSync } = require('child_process');
+      const ffprobeOutput = execSync(`ffprobe -v quiet -print_format json -show_format "${audioPath}"`, { encoding: 'utf8' });
+      const metadata = JSON.parse(ffprobeOutput);
+      return parseFloat(metadata.format.duration);
+    } catch (error) {
+      logger.warn({ error, audioPath }, "Failed to get audio duration, using default");
+      return 10; // Default 10 seconds
+    }
   }
 }
