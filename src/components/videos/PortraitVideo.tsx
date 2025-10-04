@@ -75,12 +75,10 @@ export const PortraitVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
           scenes.slice(0, i).reduce((acc, curr) => {
             return acc + curr.audio.duration;
           }, 0) * fps;
-        let durationInFrames =
-          scenes.slice(0, i + 1).reduce((acc, curr) => {
-            return acc + curr.audio.duration;
-          }, 0) * fps;
+        // Duration should be only this scene's audio duration (plus padding on last scene)
+        let durationInFrames = Math.round(scene.audio.duration * fps);
         if (config.paddingBack && i === scenes.length - 1) {
-          durationInFrames += (config.paddingBack / 1000) * fps;
+          durationInFrames += Math.round((config.paddingBack / 1000) * fps);
         }
 
         return (
@@ -91,6 +89,7 @@ export const PortraitVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
           >
             <OffthreadVideo src={video} muted />
             <Audio src={audio.url} />
+            {/* SFX removed */}
             
             {/* Show specs overlay on first scene (question) */}
             {i === 0 && questionVideoData && (

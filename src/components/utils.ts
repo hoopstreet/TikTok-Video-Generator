@@ -18,6 +18,10 @@ export const shortVideoSchema = z.object({
         duration: z.number(),
       }),
       video: z.string(),
+      sfx: z.object({
+        url: z.string(),
+        id: z.number(),
+      }).optional(),
     }),
   ),
   config: z.object({

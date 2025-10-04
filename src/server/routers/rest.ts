@@ -240,6 +240,35 @@ export class APIRouter {
     );
 
     this.router.get(
+      "/sfx/:fileName",
+      (req: ExpressRequest, res: ExpressResponse) => {
+        const { fileName } = req.params;
+        if (!fileName) {
+          res.status(400).json({
+            error: "fileName is required",
+          });
+          return;
+        }
+        const sfxFilePath = path.join(this.config.sfxDirPath, fileName);
+        if (!fs.existsSync(sfxFilePath)) {
+          res.status(404).json({
+            error: "sfx file not found",
+          });
+          return;
+        }
+        const sfxFileStream = fs.createReadStream(sfxFilePath);
+        sfxFileStream.on("error", (error) => {
+          logger.error(error, "Error reading sfx file");
+          res.status(500).json({
+            error: "Error reading sfx file",
+            fileName,
+          });
+        });
+        sfxFileStream.pipe(res);
+      },
+    );
+
+    this.router.get(
       "/short-video/:videoId",
       (req: ExpressRequest, res: ExpressResponse) => {
         try {
@@ -265,5 +294,80 @@ export class APIRouter {
         }
       },
     );
+
+    // Test endpoints
+    this.router.post("/test/image", async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const { prompt } = req.body as { prompt: string };
+        if (!prompt) {
+          res.status(400).json({ error: "prompt is required" });
+          return;
+        }
+        const { tmpFile } = await this.shortCreator.testGenerateImage(prompt);
+        res.status(200).json({ tmpFile, url: `/api/tmp/${tmpFile}` });
+      } catch (error) {
+        logger.error(error, "Error in /test/image");
+        res.status(500).json({ error: "image test failed" });
+      }
+    });
+
+    this.router.post("/test/tts", async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const { text, voice } = req.body as { text: string; voice?: string };
+        if (!text) {
+          res.status(400).json({ error: "text is required" });
+          return;
+        }
+        const { tmpMp3, duration } = await this.shortCreator.testGenerateTTS(text, voice);
+        res.status(200).json({ tmpMp3, duration, url: `/api/tmp/${tmpMp3}` });
+      } catch (error) {
+        logger.error(error, "Error in /test/tts");
+        res.status(500).json({ error: "tts test failed" });
+      }
+    });
+
+    this.router.post("/test/assemble", async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const { imageTmpFile, durationSeconds } = req.body as { imageTmpFile: string; durationSeconds: number };
+        if (!imageTmpFile || !durationSeconds) {
+          res.status(400).json({ error: "imageTmpFile and durationSeconds are required" });
+          return;
+        }
+        const { tmpVideo } = await this.shortCreator.testAssembleImageAndAudio(imageTmpFile, durationSeconds);
+        res.status(200).json({ tmpVideo, url: `/api/tmp/${tmpVideo}` });
+      } catch (error) {
+        logger.error(error, "Error in /test/assemble");
+        res.status(500).json({ error: "assemble test failed" });
+      }
+    });
+
+    // ElevenLabs TTS Test Endpoint
+    this.router.post("/test/elevenlabs", async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const { text, voiceId } = req.body as { 
+          text?: string; 
+          voiceId?: string; 
+        };
+        
+        const testText = text || "Merhaba! Bu ses ElevenLabs v3 modeli ile oluşturuldu. Türkçe konuşma sentezi test ediliyor.";
+        const testVoiceId = voiceId || process.env.ELEVENLABS_VOICE_ID || "5IRSuKNUc0nJnSPPuxMI";
+        
+        logger.info({ text: testText, voiceId: testVoiceId }, "Testing ElevenLabs TTS");
+        
+        const { tmpMp3, duration } = await this.shortCreator.testElevenLabsTTS(testText, testVoiceId);
+        
+        res.status(200).json({ 
+          tmpMp3, 
+          duration, 
+          url: `/api/tmp/${tmpMp3}`,
+          text: testText,
+          voiceId: testVoiceId,
+          model: "eleven_v3"
+        });
+      } catch (error) {
+        logger.error(error, "Error in /test/elevenlabs");
+        res.status(500).json({ error: "ElevenLabs TTS test failed", details: error instanceof Error ? error.message : String(error) });
+      }
+    });
   }
 }

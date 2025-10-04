@@ -235,4 +235,49 @@ export class MusicManager {
       mood: music.mood
     }));
   }
+
+  public findMusicByKeyword(keyword: string): MusicForVideo | null {
+    const normalizedKeyword = keyword.toLowerCase().trim();
+    
+    // First try exact match (case insensitive)
+    const exactMatch = this.musicList().find(music => 
+      music.file.toLowerCase().includes(normalizedKeyword)
+    );
+    
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
+    // If no exact match, try partial match with words
+    const words = normalizedKeyword.split(/\s+/);
+    const partialMatch = this.musicList().find(music => {
+      const fileName = music.file.toLowerCase();
+      return words.some(word => fileName.includes(word));
+    });
+    
+    return partialMatch || null;
+  }
+
+  public getMusicByKeywordOrIndex(input: string | number): MusicForVideo | null {
+    // If input is a number, use index-based selection
+    if (typeof input === 'number') {
+      return this.getMusicByIndex(input);
+    }
+    
+    // If input is a string, try keyword matching first
+    if (typeof input === 'string') {
+      const keywordMatch = this.findMusicByKeyword(input);
+      if (keywordMatch) {
+        return keywordMatch;
+      }
+      
+      // If keyword doesn't match, try parsing as number
+      const numericInput = parseInt(input, 10);
+      if (!isNaN(numericInput)) {
+        return this.getMusicByIndex(numericInput);
+      }
+    }
+    
+    return null;
+  }
 }

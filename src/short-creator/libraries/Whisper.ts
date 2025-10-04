@@ -44,10 +44,10 @@ export class Whisper {
   }
 
   // todo shall we extract it to a Caption class?
-  async CreateCaption(audioPath: string, originalText?: string): Promise<Caption[]> {
-    logger.debug({ audioPath }, "Starting to transcribe audio");
+  async CreateCaption(audioPath: string, originalText?: string, model?: string): Promise<Caption[]> {
+    logger.debug({ audioPath, model }, "Starting to transcribe audio");
     const { transcription } = await transcribe({
-      model: this.config.whisperModel,
+      model: (model || this.config.whisperModel) as "medium" | "tiny" | "tiny.en" | "base" | "base.en" | "small" | "small.en" | "medium.en" | "large-v1" | "large-v2" | "large-v3" | "large-v3-turbo",
       whisperPath: this.config.whisperInstallPath,
       modelFolder: path.join(this.config.whisperInstallPath, "models"),
       whisperCppVersion: this.config.whisperVersion,

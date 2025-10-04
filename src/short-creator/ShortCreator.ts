@@ -5,6 +5,7 @@ import cuid from "cuid";
 import path from "path";
 import https from "https";
 import http from "http";
+import axios from "axios";
 
 import { Kokoro } from "./libraries/Kokoro";
 import { Remotion } from "./libraries/Remotion";
@@ -13,6 +14,7 @@ import { FFMpeg } from "./libraries/FFmpeg";
 import { PexelsAPI } from "./libraries/Pexels";
 import { Config } from "../config";
 import { logger } from "../logger";
+import { withRetry, retryConditions } from "../utils/retry";
 import { MusicManager } from "./music";
 import type {
   SceneInput,
@@ -98,6 +100,79 @@ export class ShortCreator {
     }
   }
 
+  private async performPreFlightChecks(skipCaptions?: boolean): Promise<void> {
+    logger.debug({ skipCaptions }, "Pre-flight checks called with skipCaptions parameter");
+    
+    // Skip Faster-Whisper check if captions are disabled
+    if (skipCaptions) {
+      logger.debug("Skipping Faster-Whisper pre-flight check (captions disabled)");
+      return;
+    }
+
+    logger.debug("Performing pre-flight checks for Faster-Whisper");
+    
+    try {
+      // Find the smallest WAV file in temp directory for testing
+      const tempDir = this.config.tempDirPath;
+      const wavFiles = fs.readdirSync(tempDir)
+        .filter(file => file.endsWith('.wav'))
+        .map(file => ({
+          name: file,
+          path: path.join(tempDir, file),
+          size: fs.statSync(path.join(tempDir, file)).size
+        }))
+        .sort((a, b) => a.size - b.size);
+
+      if (wavFiles.length === 0) {
+        throw new Error("No WAV files found for Faster-Whisper testing");
+      }
+
+      const testWavFile = wavFiles[0];
+      logger.debug({ testFile: testWavFile.name, size: testWavFile.size }, "Using smallest WAV file for Faster-Whisper test");
+      
+      // Try with current model first, then fallback to tiny if needed
+      const modelsToTry = ['base', 'tiny'];
+      let lastError: Error | null = null;
+      
+      for (const model of modelsToTry) {
+        try {
+          logger.debug({ model }, "Testing Faster-Whisper with model");
+          
+          // Test Faster-Whisper transcription with timeout
+          const captions = await Promise.race([
+            this.whisper.CreateCaption(testWavFile.path, "test", model),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error(`Faster-Whisper test timeout after 30 seconds with ${model} model`)), 30000)
+            )
+          ]);
+          
+          if (captions.length === 0) {
+            throw new Error(`Faster-Whisper returned empty captions with ${model} model`);
+          }
+          
+          logger.debug({ model }, "Pre-flight check passed: Faster-Whisper is working");
+          return; // Success, exit the method
+          
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error('Unknown error');
+          logger.warn({ model, error: lastError.message }, `Faster-Whisper test failed with ${model} model, trying next model`);
+          
+          // If this is not the last model, continue to next one
+          if (model !== modelsToTry[modelsToTry.length - 1]) {
+            continue;
+          }
+        }
+      }
+      
+      // If we get here, all models failed
+      throw lastError || new Error("All Faster-Whisper models failed");
+      
+    } catch (error) {
+      logger.error({ error }, "Pre-flight check failed: Faster-Whisper is not working with any model");
+      throw new Error(`Pre-flight check failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   private async createShort(
     videoId: string,
     inputScenes: SceneInput[],
@@ -111,6 +186,16 @@ export class ShortCreator {
       scene2Duration: number;
     },
   ): Promise<string> {
+    // DEV_MODE: Use existing temp files for quick testing
+    logger.debug({ devMode: this.config.devMode, envDevMode: process.env.DEV_MODE }, "Checking DEV_MODE status");
+    if (this.config.devMode) {
+      logger.debug({ videoId, sceneCount: inputScenes.length }, "DEV_MODE is active, using existing temp files");
+      return this.createShortDevMode(videoId, inputScenes, config, skipCaptions, questionVideoData);
+    }
+
+    // Pre-flight check: ensure Faster-Whisper is working before using paid services
+    await this.performPreFlightChecks(skipCaptions);
+    
     logger.debug(
       {
         inputScenes,
@@ -174,13 +259,22 @@ export class ShortCreator {
       }
 
       await this.ffmpeg.saveToMp3(audioStream, tempMp3Path);
-      // Use Pollinations AI for dynamic image generation with 768x1365 dimensions
+      // Prefer OpenAI Images for vertical (1080x1920) if OPENAI_API_KEY is provided
+      const tempImagePath = tempVideoPath.replace('.mp4', '_image.png');
       const searchPrompt = scene.searchTerms.join(" ").replace(/\s+/g, " ");
-      const pollinationsImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(searchPrompt)}?width=768&height=1365&model=turbo&nologo=true`;
-      
-      // Download Pollinations image and convert to video
-      const tempImagePath = tempVideoPath.replace('.mp4', '_pollinations.png');
-      await this.downloadPollinationsImage(pollinationsImageUrl, tempImagePath);
+      const useOpenAI = !!process.env.OPENAI_API_KEY;
+      if (useOpenAI) {
+        try {
+          await this.generateOpenAIImage(searchPrompt, tempImagePath);
+        } catch (error) {
+          logger.warn({ error }, "OpenAI image generation failed, falling back to Pollinations");
+          const pollinationsImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(searchPrompt)}?width=768&height=1365&model=turbo&nologo=true`;
+          await this.downloadPollinationsImage(pollinationsImageUrl, tempImagePath);
+        }
+      } else {
+        const pollinationsImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(searchPrompt)}?width=768&height=1365&model=turbo&nologo=true`;
+        await this.downloadPollinationsImage(pollinationsImageUrl, tempImagePath);
+      }
       
       const tempVideoFromImagePath = tempVideoPath.replace('.mp4', '_from_image.mp4');
       await this.convertImageToVideo(tempImagePath, tempVideoFromImagePath, audioLength);
@@ -189,12 +283,13 @@ export class ShortCreator {
       const videoUrl = `http://localhost:${this.config.port}/api/tmp/${tempVideoFileName.replace('.mp4', '_from_image.mp4')}`;
       
       logger.debug({ 
-        searchTerms: scene.searchTerms, 
-        pollinationsUrl: pollinationsImageUrl,
+        searchTerms: scene.searchTerms,
+        provider: useOpenAI ? 'openai' : 'pollinations',
         duration: audioLength,
         outputPath: tempVideoFromImagePath 
-      }, "Created video from Pollinations AI image");
+      }, "Created video from generated image");
 
+      // SFX removed - scenes without sound effects
       scenes.push({
         captions,
         video: videoUrl,
@@ -202,6 +297,7 @@ export class ShortCreator {
           url: `http://localhost:${this.config.port}/api/tmp/${tempMp3FileName}`,
           duration: audioLength,
         },
+        // sfx: removed
       });
 
       totalDuration += audioLength;
@@ -258,13 +354,26 @@ export class ShortCreator {
     return fs.readFileSync(videoPath);
   }
 
-  private findMusic(videoDuration: number, tag?: MusicMoodEnum): MusicForVideo {
-    const musicFiles = this.musicManager.musicList().filter((music) => {
-      if (tag) {
-        return music.mood === tag;
+  private findMusic(videoDuration: number, musicInput?: string | MusicMoodEnum): MusicForVideo {
+    // If musicInput is provided, try to find by keyword or mood
+    if (musicInput) {
+      // Try keyword-based search first
+      const keywordMatch = this.musicManager.findMusicByKeyword(musicInput as string);
+      if (keywordMatch) {
+        return keywordMatch;
       }
-      return true;
-    });
+      
+      // If not found by keyword, try mood-based search
+      const moodMatch = this.musicManager.musicList().find((music) => 
+        music.mood === musicInput
+      );
+      if (moodMatch) {
+        return moodMatch;
+      }
+    }
+    
+    // Fallback to random selection from all music
+    const musicFiles = this.musicManager.musicList();
     return musicFiles[Math.floor(Math.random() * musicFiles.length)];
   }
 
@@ -523,7 +632,10 @@ export class ShortCreator {
 
   private async convertImageToVideo(imagePath: string, outputPath: string, durationSeconds: number): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      logger.debug({ imagePath, outputPath, durationSeconds }, "Converting image to video");
+      // Pad duration to ensure Remotion compositor can fetch the last frame without off-by-one
+      const fps = 30;
+      const paddedDuration = Math.ceil(durationSeconds * fps) / fps + 0.1;
+      logger.debug({ imagePath, outputPath, durationSeconds, paddedDuration }, "Converting image to video");
       
       const ffmpeg = require('fluent-ffmpeg');
       
@@ -531,17 +643,17 @@ export class ShortCreator {
       ffmpeg(imagePath)
         .inputOptions([
           '-loop 1', // Loop the image
-          `-t ${durationSeconds}` // Set exact duration
+          `-t ${paddedDuration}` // Set duration with slight padding to avoid last-frame miss
         ])
         .videoCodec('libx264')
         .outputOptions([
           '-pix_fmt yuv420p', // Ensure compatibility
-          '-r 30', // 30 FPS for smoother playback
+          `-r ${fps}`, // Constant FPS
           '-vf scale=1080:1920:flags=lanczos', // High quality scaling
           '-preset ultrafast', // Fast encoding
           '-crf 18', // High quality
           '-movflags +faststart', // Optimize for streaming
-          '-shortest' // End when duration is reached
+          // Do not use -shortest to avoid early cutoffs on some environments
         ])
         .format('mp4')
         .on('start', (commandLine: string) => {
@@ -627,5 +739,248 @@ export class ShortCreator {
 
       makeRequest(imageUrl);
     });
+  }
+
+  private async generateOpenAIImage(prompt: string, outputPath: string): Promise<void> {
+    return withRetry(async () => {
+      const apiKey = process.env.OPENAI_API_KEY as string;
+      if (!apiKey) {
+        throw new Error('OPENAI_API_KEY not set');
+      }
+      // OpenAI Images API compatible request
+      const body = {
+        model: 'gpt-image-1',
+        prompt,
+        size: '1024x1536', // portrait format for GPT-Image-1 (supported sizes: 1024x1024, 1024x1536, 1536x1024)
+        quality: 'high' // GPT-Image-1 supports: auto, high, medium, low
+      };
+      const res = await axios.post('https://api.openai.com/v1/images/generations', body, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        timeout: 180000, // 2 minutes timeout for GPT-Image-1
+      });
+      const b64 = res.data?.data?.[0]?.b64_json as string;
+      if (!b64) throw new Error('OpenAI did not return image');
+      const buffer = Buffer.from(b64, 'base64');
+      fs.writeFileSync(outputPath, buffer);
+      logger.debug({ outputPath, prompt }, 'OpenAI image saved');
+    }, {
+      maxAttempts: 3,
+      delayMs: 2000,
+      backoffMultiplier: 2,
+      maxDelayMs: 10000,
+      retryCondition: retryConditions.openai
+    });
+  }
+
+  // Test helpers
+  public async testGenerateImage(prompt: string): Promise<{ tmpFile: string }>{
+    const tempId = cuid();
+    const tempImageFileName = `${tempId}_test_image.png`;
+    const tempImagePath = path.join(this.config.tempDirPath, tempImageFileName);
+    const useOpenAI = !!process.env.OPENAI_API_KEY;
+    const searchPrompt = prompt.replace(/\s+/g, ' ');
+    if (useOpenAI) {
+      try {
+        await this.generateOpenAIImage(searchPrompt, tempImagePath);
+      } catch (error) {
+        logger.warn({ error }, 'OpenAI test image failed, falling back to Pollinations');
+        const pollinationsImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(searchPrompt)}?width=768&height=1365&model=turbo&nologo=true`;
+        await this.downloadPollinationsImage(pollinationsImageUrl, tempImagePath);
+      }
+    } else {
+      const pollinationsImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(searchPrompt)}?width=768&height=1365&model=turbo&nologo=true`;
+      await this.downloadPollinationsImage(pollinationsImageUrl, tempImagePath);
+    }
+    return { tmpFile: tempImageFileName };
+  }
+
+  public async testGenerateTTS(text: string, voice?: string): Promise<{ tmpMp3: string; duration: number }>{
+    const { audio, audioLength } = await this.kokoro.generate(text, (voice as any) ?? VoiceEnum.af_heart);
+    const tempId = cuid();
+    const tempMp3FileName = `${tempId}_test_tts.mp3`;
+    const tempMp3Path = path.join(this.config.tempDirPath, tempMp3FileName);
+    await this.ffmpeg.saveToMp3(audio, tempMp3Path);
+    return { tmpMp3: tempMp3FileName, duration: audioLength };
+  }
+
+  public async testAssembleImageAndAudio(tmpImage: string, durationSeconds: number): Promise<{ tmpVideo: string }>{
+    const tempId = cuid();
+    const tmpImagePath = path.join(this.config.tempDirPath, tmpImage);
+    const tmpVideoFileName = `${tempId}_test_from_image.mp4`;
+    const tmpVideoPath = path.join(this.config.tempDirPath, tmpVideoFileName);
+    await this.convertImageToVideo(tmpImagePath, tmpVideoPath, durationSeconds);
+    return { tmpVideo: tmpVideoFileName };
+  }
+
+  public async testElevenLabsTTS(text: string, voiceId: string): Promise<{ tmpMp3: string; duration: number }> {
+    // Import ElevenLabsTTS directly for testing
+    const { ElevenLabsTTS } = await import("./libraries/ElevenLabsTTS.js");
+    
+    if (!process.env.ELEVENLABS_API_KEY) {
+      throw new Error("ELEVENLABS_API_KEY is not set");
+    }
+    
+    const elevenLabs = new ElevenLabsTTS(process.env.ELEVENLABS_API_KEY);
+    
+    logger.debug({ text, voiceId }, "Testing ElevenLabs TTS with v3 model");
+    
+    const audio = await elevenLabs.synthesize({
+      text,
+      voiceId,
+      modelId: "eleven_v3"
+    });
+    
+    const tempId = cuid();
+    const tempMp3FileName = `${tempId}_elevenlabs_test.mp3`;
+    const tempMp3Path = path.join(this.config.tempDirPath, tempMp3FileName);
+    
+    // Save audio buffer directly to file
+    await fs.writeFile(tempMp3Path, Buffer.from(audio));
+    
+    // Estimate duration (ElevenLabs returns MP3, estimate ~3kB/s for duration)
+    const duration = audio.byteLength / 3000;
+    
+    logger.debug({ tempMp3FileName, duration, audioSize: audio.byteLength }, "ElevenLabs TTS test completed");
+    
+    return { tmpMp3: tempMp3FileName, duration };
+  }
+
+  private async createShortDevMode(
+    videoId: string,
+    inputScenes: SceneInput[],
+    config: RenderConfig,
+    skipCaptions?: boolean,
+    questionVideoData?: {
+      specs: string[];
+      unknownSpec: string;
+      answer: string;
+      scene1Duration: number;
+      scene2Duration: number;
+    },
+  ): Promise<string> {
+    logger.debug({ videoId, sceneCount: inputScenes.length }, "Creating video in DEV_MODE using existing temp files");
+    
+    const scenes: Scene[] = [];
+    let totalDuration = 0;
+    const tempFiles = [];
+
+    const orientation: OrientationEnum = config.orientation || OrientationEnum.portrait;
+
+    // Get existing temp files
+    const existingAudioFiles = await this.getExistingTempFiles('*.mp3');
+    const existingImageFiles = await this.getExistingTempFiles('*.png');
+    
+    logger.debug({ 
+      audioFiles: existingAudioFiles.length, 
+      imageFiles: existingImageFiles.length 
+    }, "Found existing temp files for DEV_MODE");
+
+    for (let index = 0; index < inputScenes.length; index++) {
+      // Use random existing audio file
+      const randomAudioFile = existingAudioFiles[Math.floor(Math.random() * existingAudioFiles.length)];
+      const randomImageFile = existingImageFiles[Math.floor(Math.random() * existingImageFiles.length)];
+      
+      // Calculate audio duration dynamically
+      const audioDuration = await this.getAudioDuration(randomAudioFile);
+      
+      // Create video from existing image
+      const tempVideoFileName = `${cuid()}.mp4`;
+      const tempVideoPath = path.join(this.config.tempDirPath, tempVideoFileName);
+      const tempVideoFromImagePath = tempVideoPath.replace('.mp4', '_from_image.mp4');
+      
+      await this.convertImageToVideo(randomImageFile, tempVideoFromImagePath, audioDuration);
+      
+      // Add to cleanup
+      tempFiles.push(tempVideoFromImagePath);
+      
+      // Use local HTTP server for OffthreadVideo
+      const videoUrl = `http://localhost:${this.config.port}/api/tmp/${tempVideoFileName.replace('.mp4', '_from_image.mp4')}`;
+      const audioUrl = `http://localhost:${this.config.port}/api/tmp/${path.basename(randomAudioFile)}`;
+      
+      logger.debug({ 
+        audioFile: path.basename(randomAudioFile),
+        imageFile: path.basename(randomImageFile),
+        duration: audioDuration,
+        index 
+      }, "Using existing temp files for scene");
+
+      scenes.push({
+        captions: [], // Skip captions in dev mode
+        video: videoUrl,
+        audio: {
+          url: audioUrl,
+          duration: audioDuration,
+        },
+      });
+
+      totalDuration += audioDuration;
+    }
+
+    // Add padding to last scene if specified
+    if (config.paddingBack) {
+      totalDuration += config.paddingBack / 1000;
+    }
+
+    const selectedMusic = this.findMusic(totalDuration, config.music);
+    logger.debug({ selectedMusic }, "Selected music for DEV_MODE video");
+
+    await this.remotion.render(
+      {
+        music: selectedMusic,
+        scenes,
+        config: {
+          durationMs: totalDuration * 1000,
+          paddingBack: config.paddingBack,
+          ...{
+            captionBackgroundColor: config.captionBackgroundColor,
+            captionPosition: config.captionPosition,
+          },
+          musicVolume: config.musicVolume,
+        },
+        questionVideoData,
+      },
+      videoId,
+      orientation,
+    );
+
+    // Clean up temp files
+    for (const file of tempFiles) {
+      fs.removeSync(file);
+    }
+
+    logger.debug({ videoId, totalDuration }, "DEV_MODE video created successfully");
+    return videoId;
+  }
+
+  private async getExistingTempFiles(pattern: string): Promise<string[]> {
+    const fs = require('fs');
+    const glob = require('glob');
+    
+    try {
+      const files = glob.sync(path.join(this.config.tempDirPath, pattern));
+      return files.filter((file: string) => {
+        // Filter out pollinations files and check if file exists
+        const fileName = path.basename(file);
+        return fs.existsSync(file) && !fileName.includes('pollinations');
+      });
+    } catch (error) {
+      logger.warn({ error, pattern }, "Failed to get existing temp files");
+      return [];
+    }
+  }
+
+  private async getAudioDuration(audioPath: string): Promise<number> {
+    try {
+      const { execSync } = require('child_process');
+      const ffprobeOutput = execSync(`ffprobe -v quiet -print_format json -show_format "${audioPath}"`, { encoding: 'utf8' });
+      const metadata = JSON.parse(ffprobeOutput);
+      return parseFloat(metadata.format.duration);
+    } catch (error) {
+      logger.warn({ error, audioPath }, "Failed to get audio duration, using default");
+      return 10; // Default 10 seconds
+    }
   }
 }
