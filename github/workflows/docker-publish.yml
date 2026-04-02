@@ -19,3 +19,4 @@ jobs:
           file: ./main-tiny.Dockerfile
           push: true
           tags: hoopstreet/tiktok-video-generator:latest
+          
