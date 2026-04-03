@@ -1,26 +1,24 @@
 {
-  "name": "short-video-maker",
-  "version": "1.3.4",
-  "description": "Creates short videos for TikTok, Instagram Reels, and YouTube Shorts using the Model Context Protocol (MCP) and a REST API.",
-  "main": "index.js",
-  "bugs": "https://github.com/gyoridavid/short-video-maker/issues",
-  "homepage": "https://github.com/gyoridavid/short-video-maker",
+  "name": "tiktok-video-generator",
+  "version": "9.15.4",
+  "description": "Automated short-form video creator for TikTok Affiliate marketing and Social Commerce. Unified Build 9.15.4.",
+  "main": "dist/index.js",
+  "bugs": "https://github.com/hoopstreet/TikTok-Video-Generator/issues",
+  "homepage": "https://github.com/hoopstreet/TikTok-Video-Generator",
   "scripts": {
     "build": "rimraf dist && tsc --project tsconfig.build.json && vite build",
     "dev": "vite build --watch | node --watch -r ts-node/register src/index.ts ",
     "start": "node dist/index.js",
     "test": "vitest",
-    "prepublishOnly": "npm run build && echo \"#!/usr/bin/env node\n$(cat dist/index.js)\" > dist/index.js && chmod +x dist/index.js",
-    "publish:docker": "npm run publish:docker:normal && npm run publish:docker:cuda && npm run publish:docker:tiny",
-    "publish:docker:cuda": "docker buildx build --platform linux/amd64 -t gyoridavid/short-video-maker:latest-cuda -t gyoridavid/short-video-maker:${npm_package_version}-cuda -f main-cuda.Dockerfile --push ./",
-    "publish:docker:normal": "docker buildx build --platform linux/amd64,linux/arm64 -t gyoridavid/short-video-maker:latest -t gyoridavid/short-video-maker:${npm_package_version} -f main.Dockerfile --push ./",
-    "publish:docker:tiny": "docker buildx build --platform linux/amd64,linux/arm64 -t gyoridavid/short-video-maker:latest-tiny -t gyoridavid/short-video-maker:${npm_package_version}-tiny -f main-tiny.Dockerfile --push ./",
+    "prepublishOnly": "pnpm run build && echo \"#!/usr/bin/env node\\n$(cat dist/index.js)\" > dist/index.js && chmod +x dist/index.js",
+    "publish:docker": "pnpm run publish:docker:tiny",
+    "publish:docker:tiny": "docker buildx build --platform linux/amd64 -t hoopstreet/tiktok-video-generator:latest-tiny -t hoopstreet/tiktok-video-generator:9.15.4 -f main-tiny.Dockerfile --push ./",
     "ui:dev": "vite",
     "ui:build": "vite build",
     "ui:preview": "vite preview"
   },
   "bin": {
-    "short-video-maker": "dist/index.js"
+    "hoopstreet-video": "dist/index.js"
   },
   "files": [
     "dist",
@@ -29,20 +27,12 @@
   "keywords": [
     "shorts",
     "mcp",
-    "model context protocol",
-    "reels",
-    "tiktok",
-    "youtube shorts",
-    "youtube",
-    "short video",
-    "video creation",
-    "instagram",
-    "video",
-    "generator",
+    "tiktok-affiliate",
+    "hoopstreet",
     "remotion",
-    "faceless video"
+    "video-automation"
   ],
-  "author": "David Gyori",
+  "author": "hoopstreet <hoopstreet143@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "@emotion/react": "^11.11.3",
@@ -62,7 +52,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.9.0",
     "content-type": "^1.0.5",
-    "cuid": "^3.0.0",
+    "cuid2": "^2.2.2",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",
     "fluent-ffmpeg": "^2.1.3",
