@@ -111,7 +111,7 @@ export const PortraitVideo: React.FC<z.infer<typeof shortVideoSchema>> = ({
                       return (
                         <p
                           style={{
-                            fontSize: "6em",
+                            fontSize: "48px", color: "#FFFF00", webkitTextStroke: "14px black", padding: "0 320px",
                             fontFamily: fontFamily,
                             fontWeight: "black",
                             color: "white",

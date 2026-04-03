@@ -14,3 +14,16 @@ npm ERR! 404 tarball, folder, http url, or git url.
 
 npm ERR! A complete log of this run can be found in:
 npm ERR!     /root/.npm/_logs/2026-04-03T19_31_26_356Z-debug-0.log
+[main a6b6fcf] System: Auto-sync & Dependency Repair (Legacy-Peer-Deps)
+ 1 file changed, 16 insertions(+)
+ create mode 100644 hoopstreet_debug.log
+remote: 
+remote: GitHub found 42 vulnerabilities on hoopstreet/TikTok-Video-Generator's default branch (1 critical, 23 high, 13 moderate, 5 low). To find out more, visit:        
+remote:      https://github.com/hoopstreet/TikTok-Video-Generator/security/dependabot        
+remote: 
+To github.com:hoopstreet/TikTok-Video-Generator.git
+   14a28a6..a6b6fcf  main -> main
+--- SYSTEM INFO ---
+v18.19.1
+9.2.0
+    "cuid2": "^2.2.2",
