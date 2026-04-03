@@ -1,0 +1,8 @@
+version: 2
+updates:
+  - package-ecosystem: "npm" # This also covers pnpm
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Added to handle pnpm v9 correctly
+    versioning-strategy: increase
