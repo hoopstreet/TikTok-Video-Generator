@@ -1,4 +1,4 @@
-import { OrientationEnum } from "./../types/shorts";
+import { OrientationEnum, MiniMaxVoiceEnum } from "./../types/shorts";
 /* eslint-disable @remotion/deterministic-randomness */
 import fs from "fs-extra";
 import cuid from "cuid";
@@ -7,6 +7,7 @@ import https from "https";
 import http from "http";
 
 import { Kokoro } from "./libraries/Kokoro";
+import { MiniMax } from "./libraries/MiniMax";
 import { Remotion } from "./libraries/Remotion";
 import { Whisper } from "./libraries/Whisper";
 import { FFMpeg } from "./libraries/FFmpeg";
@@ -38,6 +39,7 @@ export class ShortCreator {
     private ffmpeg: FFMpeg,
     private pexelsApi: PexelsAPI,
     private musicManager: MusicManager,
+    private minimax?: MiniMax,
   ) {}
 
   public status(id: string): VideoStatus {
@@ -106,12 +108,29 @@ export class ShortCreator {
     const orientation: OrientationEnum =
       config.orientation || OrientationEnum.portrait;
 
+    const MINIMAX_VOICES = new Set(Object.values(MiniMaxVoiceEnum) as string[]);
+
     let index = 0;
     for (const scene of inputScenes) {
-      const audio = await this.kokoro.generate(
-        scene.text,
-        config.voice ?? "af_heart",
-      );
+      const isMinimaxVoice =
+        config.voice && MINIMAX_VOICES.has(config.voice);
+      let audio: { audio: ArrayBuffer; audioLength: number };
+      if (isMinimaxVoice) {
+        if (!this.minimax) {
+          throw new Error(
+            "MINIMAX_API_KEY environment variable is required to use MiniMax TTS voices",
+          );
+        }
+        audio = await this.minimax.generate(
+          scene.text,
+          config.voice as `${MiniMaxVoiceEnum}`,
+        );
+      } else {
+        audio = await this.kokoro.generate(
+          scene.text,
+          config.voice ?? "af_heart",
+        );
+      }
       let { audioLength } = audio;
       const { audio: audioStream } = audio;
 
@@ -292,6 +311,8 @@ export class ShortCreator {
   }
 
   public ListAvailableVoices(): string[] {
-    return this.kokoro.listAvailableVoices();
+    const kokoroVoices = this.kokoro.listAvailableVoices();
+    const minimaxVoices = this.minimax ? this.minimax.listAvailableVoices() : [];
+    return [...kokoroVoices, ...minimaxVoices];
   }
 }

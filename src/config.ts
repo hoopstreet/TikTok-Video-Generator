@@ -46,6 +46,7 @@ export class Config {
   public whisperVersion: string = whisperVersion;
   public whisperModel: whisperModels = defaultWhisperModel;
   public kokoroModelPrecision: kokoroModelPrecision = "fp32";
+  public minimaxApiKey: string | null = null;
 
   // docker-specific, performance-related settings to prevent memory issues
   public concurrency?: number;
@@ -88,6 +89,8 @@ export class Config {
       this.kokoroModelPrecision = process.env
         .KOKORO_MODEL_PRECISION as kokoroModelPrecision;
     }
+
+    this.minimaxApiKey = process.env.MINIMAX_API_KEY || null;
 
     this.concurrency = process.env.CONCURRENCY
       ? parseInt(process.env.CONCURRENCY)
