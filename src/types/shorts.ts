@@ -71,6 +71,15 @@ export enum VoiceEnum {
   bm_fable = "bm_fable",
 }
 
+export enum MiniMaxVoiceEnum {
+  English_Graceful_Lady = "English_Graceful_Lady",
+  English_Insightful_Speaker = "English_Insightful_Speaker",
+  English_radiant_girl = "English_radiant_girl",
+  English_Persuasive_Man = "English_Persuasive_Man",
+  English_Lucky_Robot = "English_Lucky_Robot",
+  English_expressive_narrator = "English_expressive_narrator",
+}
+
 export enum OrientationEnum {
   landscape = "landscape",
   portrait = "portrait",
@@ -105,9 +114,11 @@ export const renderConfig = z.object({
       "Background color of the caption, a valid css color, default is blue",
     ),
   voice: z
-    .nativeEnum(VoiceEnum)
+    .union([z.nativeEnum(VoiceEnum), z.nativeEnum(MiniMaxVoiceEnum)])
     .optional()
-    .describe("Voice to be used for the speech, default is af_heart"),
+    .describe(
+      "Voice to be used for the speech. Use VoiceEnum values for local Kokoro TTS (default: af_heart) or MiniMaxVoiceEnum values for MiniMax cloud TTS (requires MINIMAX_API_KEY).",
+    ),
   orientation: z
     .nativeEnum(OrientationEnum)
     .optional()
@@ -119,7 +130,7 @@ export const renderConfig = z.object({
 });
 export type RenderConfig = z.infer<typeof renderConfig>;
 
-export type Voices = `${VoiceEnum}`;
+export type Voices = `${VoiceEnum}` | `${MiniMaxVoiceEnum}`;
 
 export type Video = {
   id: string;

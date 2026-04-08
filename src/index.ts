@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs-extra";
 
 import { Kokoro } from "./short-creator/libraries/Kokoro";
+import { MiniMax } from "./short-creator/libraries/MiniMax";
 import { Remotion } from "./short-creator/libraries/Remotion";
 import { Whisper } from "./short-creator/libraries/Whisper";
 import { FFMpeg } from "./short-creator/libraries/FFmpeg";
@@ -41,6 +42,13 @@ async function main() {
   const ffmpeg = await FFMpeg.init();
   const pexelsApi = new PexelsAPI(config.pexelsApiKey);
 
+  const minimax = config.minimaxApiKey
+    ? MiniMax.fromApiKey(config.minimaxApiKey)
+    : undefined;
+  if (minimax) {
+    logger.info("MiniMax TTS provider enabled");
+  }
+
   logger.debug("initializing the short creator");
   const shortCreator = new ShortCreator(
     config,
@@ -50,6 +58,7 @@ async function main() {
     ffmpeg,
     pexelsApi,
     musicManager,
+    minimax,
   );
 
   if (!config.runningInDocker) {
