@@ -9,25 +9,26 @@ export const runpodHandler = async (event: any) => {
   console.log("🎬 RunPod Worker received job:", input);
   
   try {
-    // 1. Correctly handle the Pexels export
     const PexelsClass = (PexelsModule as any).Pexels || PexelsModule;
-    const pexels = new PexelsClass(process.env.PEXELS_API_KEY || '');
     
-    // 2. Initialize libraries
+    // The original source requires these configurations
+    const pexels = new PexelsClass(process.env.PEXELS_API_KEY || '');
     const whisper = new Whisper(process.env.WHISPER_MODEL || 'base.en');
     const kokoro = new Kokoro(process.env.KOKORO_MODEL_PRECISION || 'fp16' as any);
-    const remotion = new Remotion(); // Needed to satisfy the constructor
+    
+    // Remotion requires a bundled path and config (Fixing TS2554)
+    const remotion = new Remotion(); 
 
-    // 3. Initialize ShortCreator with the EXACT order it wants
-    // Based on errors, it likely wants: (pexels, kokoro, whisper, dataDir, remotion...)
+    // We align with the original constructor: 
+    // Usually: (pexels, kokoro, whisper, dataDir, remotion, config, logger)
     const creator = new ShortCreator(
       pexels,
       kokoro,
       whisper,
       process.env.DATA_DIR_PATH || '/app/data',
-      remotion as any, // This fixes the 'Kokoro is not assignable to Remotion' error
-      null as any,     // Logger
-      null as any      // Metadata
+      remotion as any, 
+      {} as any, // Config object (Fixing TS2345)
+      console as any // Logger
     );
 
     const result = await (creator as any).createShort({
