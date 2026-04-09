@@ -1,24 +1,36 @@
 import { ShortCreator } from '../short-creator/ShortCreator';
+import { Kokoro } from '../short-creator/libraries/Kokoro';
+import { Whisper } from '../short-creator/libraries/Whisper';
+import { Pexels } from '../short-creator/libraries/Pexels';
 
 export const runpodHandler = async (event: any) => {
   const { input } = event;
   console.log("🎬 RunPod Worker received job:", input);
   
   try {
-    // We provide the actual values the constructor likely wants
-    // If it expects 7, we provide 7.
+    // 1. Initialize libraries using settings from your original source
+    const pexels = new Pexels(process.env.PEXELS_API_KEY || '');
+    const whisper = new Whisper(process.env.WHISPER_MODEL || 'base.en');
+    const kokoro = new Kokoro(process.env.KOKORO_MODEL_PRECISION || 'fp16' as any);
+
+    // 2. Initialize Creator with the 7 arguments expected by the constructor
     const creator = new ShortCreator(
-      process.env.PEXELS_API_KEY as any,
-      process.env.KOKORO_KEY as any, // Placeholder for your TTS key
-      "/usr/bin/ffmpeg",             // Standard Linux FFmpeg path
-      input.voice || "en_us_001",    // Default voice
-      null as any,                   // Placeholder 5
-      null as any,                   // Placeholder 6
-      null as any                    // Placeholder 7
+      pexels,
+      kokoro,
+      whisper,
+      process.env.DATA_DIR_PATH || '/app/data',
+      null as any, // Logger placeholder
+      null as any, // Metadata placeholder
+      null as any  // Cache placeholder
     );
 
-    // Using 'any' to access the private 'createShort' method
-    const result = await (creator as any).createShort(input); 
+    // 3. Run the generation (using 'any' to access the private method)
+    const result = await (creator as any).createShort({
+      ...input,
+      voice: input.voice || 'af_heart', // Default from your instructions
+      orientation: input.orientation || 'portrait',
+      music: input.music || 'random'
+    }); 
     
     return {
       status: "success",
@@ -27,10 +39,6 @@ export const runpodHandler = async (event: any) => {
     };
   } catch (error: any) {
     console.error("❌ Generation Failed:", error);
-    return {
-      status: "error",
-      message: error.message,
-      stack: error.stack
-    };
+    return { status: "error", message: error.message };
   }
 };
