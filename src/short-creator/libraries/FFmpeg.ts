@@ -1,5 +1,5 @@
 import { logger } from "../../logger";
-import { FFMpeg as FFMpegAPI } from "../types/shorts";
+import { FFMpeg as FFMpegAPI } from "../../types/shorts";
 
 export class FFMpeg implements FFMpegAPI {
   private logger = logger.child({ module: "FFMpeg" });

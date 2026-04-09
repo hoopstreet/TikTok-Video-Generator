@@ -1,4 +1,4 @@
-import { Kokoro as KokoroAPI } from "../types/shorts";
+import { Kokoro as KokoroAPI } from "../../types/shorts";
 
 export class Kokoro implements KokoroAPI {
   private model: any;
