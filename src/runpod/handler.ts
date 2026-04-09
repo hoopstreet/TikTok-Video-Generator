@@ -1,19 +1,20 @@
-import { generateVideo } from '../engine/generator'; // Adjust path to your actual generator
+import { ShortCreator } from '../short-creator/ShortCreator';
 
 export const runpodHandler = async (event: any) => {
   const { input } = event;
   console.log("🎬 RunPod Worker received job:", input);
   
   try {
-    // This calls your actual video engine
-    const result = await generateVideo(input); 
+    // Using your ShortCreator class logic
+    const creator = new ShortCreator();
+    const result = await creator.createShort(input); 
     
     return {
       status: "success",
       videoUrl: result.url,
       metadata: result.metadata
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Generation Failed:", error);
     return {
       status: "error",
