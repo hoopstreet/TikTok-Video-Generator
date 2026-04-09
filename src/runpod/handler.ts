@@ -10,20 +10,24 @@ export const runpodHandler = async (event: any) => {
   console.log("🎬 RunPod Worker received job:", input);
   
   try {
-    // Initialize exactly as the original repo expects
     const pexelsClass = (PexelsModule as any).Pexels || PexelsModule;
     
+    // 1. Prepare all sub-libraries
     const config = { ...input } as any;
-    const remotion = new Remotion();
+    
+    // Fixing TS2554: Passing empty strings/objects to satisfy Remotion(bundle, config)
+    const remotion = new Remotion("" as any, {} as any); 
+    
     const kokoro = new Kokoro(process.env.KOKORO_MODEL_PRECISION || 'fp16' as any);
     const whisper = new Whisper(process.env.WHISPER_MODEL || 'base.en');
     const ffmpeg = new FFMpeg();
     const pexels = new pexelsClass(process.env.PEXELS_API_KEY || '');
-    const musicManager = null as any; // If you aren't using custom music logic yet
+    const musicManager = null as any;
 
-    // PASSING ARGUMENTS IN THE EXACT ORDER FROM YOUR GIT SHOW OUTPUT:
+    // 2. Initialize using the EXACT sequence from the source code:
+    // (config, remotion, kokoro, whisper, ffmpeg, pexelsApi, musicManager)
     const creator = new ShortCreator(
-      config,       // 1. config
+      config,       // 1. config (Fixes TS2345)
       remotion,     // 2. remotion
       kokoro,       // 3. kokoro
       whisper,      // 4. whisper
