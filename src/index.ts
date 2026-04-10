@@ -9,8 +9,8 @@ setTimeout(async () => {
     try {
         console.log("🚀 Attempting Dynamic Import of server...");
         
-        // This prevents the app from hanging during the initial boot
-        const { startWebServer } = await import('./server/server');
+        // Point specifically to the .js file in the dist structure
+        const { startWebServer } = await import('./server/server.js');
         
         console.log("📦 Server module loaded successfully.");
         const port = Number(process.env.PORT) || 7860;
@@ -18,5 +18,6 @@ setTimeout(async () => {
         await startWebServer(port);
     } catch (err) {
         console.error("❌ Fatal Startup Error:", err);
+        console.log("🔍 Debug Path Check: Current directory is", process.cwd());
     }
 }, 2000);
