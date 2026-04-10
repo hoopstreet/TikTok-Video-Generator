@@ -9,7 +9,7 @@ if (mode === 'WORKER') {
   const runpod = require('runpod-sdk');
   runpod.start({ handler: runpodHandler });
 } else {
-  console.log("🌐 Starting in WEB UI mode...");
+  console.log("🌐 Starting in WEB UI mode [v2.0-DEBUG]...");
   // Keep process alive
   setInterval(() => {}, 1000);
   // Try to find a start function or default to a standard listener
