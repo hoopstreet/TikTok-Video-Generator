@@ -81,3 +81,16 @@ export const startWebServer = (port: number) => {
     console.log("🚀 Server is officially live on port " + port);
   });
 };
+
+// Final robust export for external access
+export const startWebServer = async (port: number) => {
+  const expressApp = require('./app').default || require('./app');
+  
+  // Ensure we listen on 0.0.0.0 for Docker/Hugging Face
+  const server = expressApp.listen(port, "0.0.0.0", () => {
+    console.log("🚀 SUCCESS: TikTok Generator UI is live at http://0.0.0.0:" + port);
+  });
+
+  // Keep process alive if the interval somehow fails
+  server.on('error', (err: any) => console.error("Server Error:", err));
+};
