@@ -1,21 +1,22 @@
-import { runpodHandler } from './runpod/handler';
-// Importing everything as 'serverModule' to find the right start function
-import * as serverModule from './server/server';
+console.log("🌐 Starting in WEB UI mode [v2.0-DEBUG]...");
 
-const mode = process.env.APP_MODE || 'WEB';
+// Keep process alive immediately
+const heartbeat = setInterval(() => {
+    console.log("💓 Heartbeat: Event loop is free.");
+}, 30000);
 
-if (mode === 'WORKER') {
-  console.log("🚀 Starting in RUNPOD WORKER mode...");
-  const runpod = require('runpod-sdk');
-  runpod.start({ handler: runpodHandler });
-} else {
-  console.log("🌐 Starting in WEB UI mode [v2.0-DEBUG]...");
-  // Keep process alive
-  setInterval(() => {}, 1000);
-  // Try to find a start function or default to a standard listener
-  if ((serverModule as any).startWebServer || (serverModule as any).default?.startWebServer) {
-    (serverModule as any).startWebServer || (serverModule as any).default?.startWebServer(Number(process.env.PORT) || 7860);
-  } else {
-    console.log("⚠️ startWebServer not found, check src/server/server.ts exports");
-  }
-}
+setTimeout(async () => {
+    try {
+        console.log("🚀 Attempting Dynamic Import of server...");
+        
+        // This prevents the app from hanging during the initial boot
+        const { startWebServer } = await import('./server/server');
+        
+        console.log("📦 Server module loaded successfully.");
+        const port = Number(process.env.PORT) || 7860;
+        
+        await startWebServer(port);
+    } catch (err) {
+        console.error("❌ Fatal Startup Error:", err);
+    }
+}, 2000);
