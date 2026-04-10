@@ -10,6 +10,8 @@ if (mode === 'WORKER') {
   runpod.start({ handler: runpodHandler });
 } else {
   console.log("🌐 Starting in WEB UI mode...");
+  // Keep process alive
+  setInterval(() => {}, 1000);
   // Try to find a start function or default to a standard listener
   if ((serverModule as any).startWebServer || (serverModule as any).default?.startWebServer) {
     (serverModule as any).startWebServer || (serverModule as any).default?.startWebServer(Number(process.env.PORT) || 7860);
