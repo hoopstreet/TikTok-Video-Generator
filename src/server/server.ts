@@ -66,3 +66,10 @@ export class Server {
 }
 
 export { startWebServer };
+
+export const startWebServer = (port: number) => {
+  const app = require('./app').default || require('./app');
+  app.listen(port, () => {
+    console.log("🚀 Server running on port " + port);
+  });
+};
