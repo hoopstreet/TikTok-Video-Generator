@@ -73,3 +73,11 @@ export const startWebServer = (port: number) => {
     console.log("🚀 Server running on port " + port);
   });
 };
+
+// Force global export for the index.ts to find
+(module.exports as any).startWebServer = (port: number) => {
+  const app = require('./app').default || require('./app');
+  app.listen(port, "0.0.0.0", () => {
+    console.log("🚀 Server is officially live on port " + port);
+  });
+};
