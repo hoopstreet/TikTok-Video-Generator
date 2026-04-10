@@ -64,3 +64,5 @@ export class Server {
     return this.app;
   }
 }
+
+export { startWebServer };
