@@ -1,4 +1,4 @@
 FROM hoopstreet/tiktok-video-generator:latest-cuda
-ENV PORT=3123
-EXPOSE 3123
+ENV PORT=7860
+EXPOSE 7860
 CMD ["pnpm", "start"]
