@@ -18,19 +18,23 @@ export class APIRouter {
         const endpointId = process.env.RUNPOD_ENDPOINT_ID;
 
         if (!runpodApiKey || !endpointId) {
-          throw new Error("Missing RunPod configuration in Environment Variables");
+          throw new Error("Missing RunPod configuration");
         }
 
-        logger.info("📡 Forwarding manual request from HF UI to RunPod...");
+        logger.info("📡 Forwarding to RunPod...");
 
-        // Forward request to RunPod Serverless
         const response = await axios.post(
           `https://api.runpod.ai/v2/${endpointId}/run`,
           { input: req.body },
           { headers: { Authorization: `Bearer ${runpodApiKey}` } }
         );
 
-        res.status(201).json(response.data);
+        // RunPod returns { id: "job-id", status: "IN_QUEUE" }
+        // The UI expects { videoId: "some-id" }
+        res.status(201).json({
+          videoId: response.data.id
+        });
+        
       } catch (error: any) {
         logger.error(error.message, "RunPod Forwarding Error");
         res.status(500).json({ error: error.message });
