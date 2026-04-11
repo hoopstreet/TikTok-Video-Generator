@@ -2,41 +2,35 @@ import path from 'path';
 import fs from 'fs';
 
 export const startWebServer = (port: number) => {
-  console.log("🔍 [Debug] Final attempt to locate app logic...");
+  console.log("🔍 [Debug] Scanning for Express app export...");
   
   try {
-    // According to your scan, these are the only logical places
-    const possiblePaths = [
+    // We will check index.js and the REST router, as these are likely spots
+    const targets = [
       path.join(process.cwd(), 'dist', 'index.js'),
-      path.join(process.cwd(), 'dist', 'server', 'routers', 'rest.js')
+      path.join(process.cwd(), 'dist', 'server', 'routers', 'rest.js'),
+      path.join(process.cwd(), 'dist', 'components', 'root', 'Root.js')
     ];
 
-    let foundPath = "";
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        console.log("✅ Trying module at: " + p);
-        foundPath = p;
-        break;
+    for (const target of targets) {
+      if (!fs.existsSync(target)) continue;
+      
+      console.log("📂 Checking: " + target);
+      const mod = require(target);
+      
+      // Look for the app object in common export names
+      const app = mod.app || mod.default || (typeof mod === 'function' ? mod : null);
+
+      if (app && typeof app.listen === 'function') {
+        console.log("✅ SUCCESS: Found Express app in " + target);
+        app.listen(port, "0.0.0.0", () => {
+          console.log("🚀 TikTok Generator UI is LIVE on port " + port);
+        });
+        return;
       }
     }
 
-    if (!foundPath) {
-      throw new Error("Could not find index.js or rest.js");
-    }
-
-    const appModule = require(foundPath);
-    // If index.js IS the app, use it. If it exports an app, use that.
-    const app = appModule.default || appModule;
-    
-    // Check if the required module has a .listen function
-    if (typeof app.listen !== 'function') {
-       console.log("⚠️ Module found but it's not an Express app. It might be the entry point.");
-       return; 
-    }
-
-    const server = app.listen(port, "0.0.0.0", () => {
-      console.log("🚀 SUCCESS: TikTok Generator UI is live at port " + port);
-    });
+    throw new Error("Could not find an exported Express app with a .listen() method.");
 
   } catch (error) {
     console.error("❌ [Debug] Startup Error:", error);
