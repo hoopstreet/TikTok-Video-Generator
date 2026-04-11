@@ -1,21 +1,11 @@
-import { pipeline } from '@xenova/transformers';
-
+// Use dynamic import to avoid build-time issues with ONNX runtimes
 export class Kokoro {
   private model: any = null;
   private precision: string;
 
   constructor(precision: string = 'fp16') {
     this.precision = precision;
-    console.log(`🎙️ Kokoro initializing with precision: ${precision}`);
-  }
-
-  private async initModel() {
-    if (!this.model) {
-      // Loading from Hugging Face Hub as defined in your config
-      this.model = await pipeline('text-to-speech', 'onnx-community/Kokoro-82M-v1.0-ONNX', {
-        quantized: this.precision === 'fp16',
-      });
-    }
+    console.log(`🎙️ Kokoro initialized (Precision: ${precision})`);
   }
 
   public listAvailableVoices(): string[] {
@@ -23,11 +13,15 @@ export class Kokoro {
   }
 
   public async generate(text: string, voice: string): Promise<ArrayBuffer> {
-    await this.initModel();
-    console.log(`🔊 Kokoro generating audio for: "${text.substring(0, 20)}..."`);
-    
+    if (!this.model) {
+      const { pipeline } = await import('@xenova/transformers');
+      this.model = await pipeline('text-to-speech', 'onnx-community/Kokoro-82M-v1.0-ONNX', {
+        quantized: this.precision === 'fp16',
+      });
+    }
+
+    console.log(`🔊 Generating: ${text.substring(0, 20)}...`);
     const output = await this.model(text, { speaker_id: voice });
-    // Convert the float32 array output to an ArrayBuffer
     return output.audio.buffer;
   }
 }
