@@ -1,39 +1,38 @@
+import express from 'express';
 import path from 'path';
-import fs from 'fs';
+import { Config } from '../config';
+import { ShortCreator } from '../short-creator/ShortCreator';
+import { APIRouter } from './routers/rest';
 
-export const startWebServer = (port: number) => {
-  console.log("🔍 [Debug] Deep-scanning for ANY server instance...");
+export const startWebServer = async (port: number) => {
+  console.log("🏗️  Manually constructing Express app from routers...");
   
   try {
-    const targets = [
-      path.join(process.cwd(), 'dist', 'index.js'),
-      path.join(process.cwd(), 'dist', 'server', 'routers', 'rest.js'),
-      path.join(process.cwd(), 'dist', 'components', 'root', 'Root.js'),
-      path.join(process.cwd(), 'dist', 'server', 'server.js')
-    ];
+    const app = express();
+    const config = new Config();
+    const shortCreator = new ShortCreator(config);
+    
+    // Initialize your REST router
+    const apiRouter = new APIRouter(config, shortCreator);
+    
+    // Attach the UI and the API
+    app.use(express.json());
+    app.use('/api', apiRouter.router);
+    
+    // Serve the static UI files from the dist/ui folder
+    const uiPath = path.join(process.cwd(), 'dist', 'ui');
+    app.use(express.static(uiPath));
+    
+    // Catch-all for React Router
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(uiPath, 'index.html'));
+    });
 
-    for (const target of targets) {
-      if (!fs.existsSync(target) || target === __filename) continue;
-      
-      const mod = require(target);
-      // Scan all exported members for something that looks like a server
-      for (const key in mod) {
-        const item = mod[key];
-        if (item && (typeof item.listen === 'function' || typeof item.fetch === 'function')) {
-          console.log("✅ Found potential server: " + key + " in " + target);
-          
-          if (typeof item.listen === 'function') {
-            item.listen(port, "0.0.0.0", () => {
-              console.log("🚀 Server LIVE on port " + port);
-            });
-            return;
-          }
-        }
-      }
-    }
-    throw new Error("No server instance found in exports.");
+    app.listen(port, "0.0.0.0", () => {
+      console.log("🚀 SUCCESS: TikTok Generator UI is LIVE at port " + port);
+    });
   } catch (error) {
-    console.error("❌ [Debug] Startup Error:", error);
+    console.error("❌ Construction Error:", error);
   }
 };
 
