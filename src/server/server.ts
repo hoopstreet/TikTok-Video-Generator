@@ -1,57 +1,45 @@
 import path from 'path';
 import fs from 'fs';
 
-const listFiles = (dir: string) => {
-  const files = fs.readdirSync(dir);
-  for (const file of files) {
-    const fullPath = path.join(dir, file);
-    if (fs.statSync(fullPath).isDirectory()) {
-      listFiles(fullPath);
-    } else {
-      console.log("📄 Found file: " + fullPath);
-    }
-  }
-};
-
 export const startWebServer = (port: number) => {
-  console.log("🔍 [Debug] Starting Path Discovery...");
+  console.log("🔍 [Debug] Final attempt to locate app logic...");
   
   try {
-    const distPath = path.join(process.cwd(), 'dist');
-    console.log("📁 Scanning directory: " + distPath);
-    listFiles(distPath);
+    // According to your scan, these are the only logical places
+    const possiblePaths = [
+      path.join(process.cwd(), 'dist', 'index.js'),
+      path.join(process.cwd(), 'dist', 'server', 'routers', 'rest.js')
+    ];
 
-    // After scanning, we'll try a flexible require
-    // If we find ANY file named 'app.js', we try to load it
-    const findApp = (dir: string): string | null => {
-        const files = fs.readdirSync(dir);
-        for (const file of files) {
-            const fullPath = path.join(dir, file);
-            if (fs.statSync(fullPath).isDirectory()) {
-                const found = findApp(fullPath);
-                if (found) return found;
-            } else if (file === 'app.js') {
-                return fullPath;
-            }
-        }
-        return null;
-    };
-
-    const foundPath = findApp(distPath);
-
-    if (!foundPath) {
-      throw new Error("CRITICAL: app.js was not found anywhere in /dist!");
+    let foundPath = "";
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        console.log("✅ Trying module at: " + p);
+        foundPath = p;
+        break;
+      }
     }
 
-    console.log("✅ Auto-located app at: " + foundPath);
+    if (!foundPath) {
+      throw new Error("Could not find index.js or rest.js");
+    }
+
     const appModule = require(foundPath);
+    // If index.js IS the app, use it. If it exports an app, use that.
     const app = appModule.default || appModule;
     
+    // Check if the required module has a .listen function
+    if (typeof app.listen !== 'function') {
+       console.log("⚠️ Module found but it's not an Express app. It might be the entry point.");
+       return; 
+    }
+
     const server = app.listen(port, "0.0.0.0", () => {
-      console.log("🚀 SUCCESS: TikTok Generator UI is live at http://0.0.0.0:" + port);
+      console.log("🚀 SUCCESS: TikTok Generator UI is live at port " + port);
     });
+
   } catch (error) {
-    console.error("❌ [Debug] Discovery Crash:", error);
+    console.error("❌ [Debug] Startup Error:", error);
   }
 };
 
