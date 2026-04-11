@@ -7,22 +7,18 @@ const port = process.env.PORT || 7860;
 
 app.use(express.json());
 
-// Identify possible UI locations
-const paths = [
-    path.join(process.cwd(), "dist"),
-    path.join(process.cwd(), "static"),
-    path.join(__dirname, "../../dist"),
-    path.join(__dirname, "../../static")
-];
-
-// Find the first path that actually exists
-const uiPath = paths.find(p => fs.existsSync(p)) || paths[0];
-console.log(`📂 Serving UI from: ${uiPath}`);
+// 1. Point exactly to where vite.config.ts outputs the build
+const uiPath = path.join(process.cwd(), "dist/ui");
+console.log(`📂 Final UI Path: ${uiPath}`);
 
 app.use(express.static(uiPath));
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", ui_path: uiPath });
+    res.json({ 
+        status: "ok", 
+        searching_at: uiPath,
+        exists: fs.existsSync(uiPath) 
+    });
 });
 
 app.get("*", (req, res) => {
@@ -30,7 +26,11 @@ app.get("*", (req, res) => {
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send("<h1>UI Not Found</h1><p>The build folder is missing index.html. Check Docker build logs.</p>");
+        res.status(404).send(`
+            <h1>UI Still Building...</h1>
+            <p>Server is looking in: <b>${uiPath}</b></p>
+            <p>Check GitHub Actions to ensure <b>pnpm build</b> finished.</p>
+        `);
     }
 });
 
