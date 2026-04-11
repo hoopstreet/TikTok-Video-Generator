@@ -1,8 +1,8 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-// Import your existing API router if you have one, 
-// otherwise we ensure the routes exist here.
+import { restRouter } from "./routers/rest";
+// import { mcpRouter } from "./routers/mcp"; // Add if you need MCP support too
 
 const app = express();
 const port = process.env.PORT || 7860;
@@ -11,24 +11,24 @@ app.use(express.json());
 
 const uiPath = path.join(process.cwd(), "dist/ui");
 
-// 1. Serve static files
+// 1. Serve static files from the Vite build
 app.use(express.static(uiPath));
 
-// 2. IMPORTANT: API Routes must be defined BEFORE the catch-all '*'
-// This ensures your "Generate" button actually hits the backend logic
-app.post("/api/videos", (req, res) => {
-    console.log("🎬 Video generation request received:", req.body);
-    // Trigger your video generation logic here
-    res.json({ success: true, message: "Generation started" });
-});
+// 2. Connect your REAL API routes
+app.use("/api", restRouter);
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", port: port });
+    res.json({ status: "ok", port: port, engine: "rest" });
 });
 
-// 3. Catch-all for React Router
+// 3. Catch-all for React Router navigation
 app.get("*", (req, res) => {
-    res.sendFile(path.join(uiPath, "index.html"));
+    const indexPath = path.join(uiPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send("UI build missing. Check GitHub Actions.");
+    }
 });
 
 export const startWebServer = () => {
