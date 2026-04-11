@@ -5,7 +5,7 @@ import { ShortCreator } from '../short-creator/ShortCreator';
 import { APIRouter } from './routers/rest';
 
 export const startWebServer = async (port: number) => {
-  console.log("🏗️  Assembling Express app with debug logging...");
+  console.log("🏗️  Assembling Express app with Error Tracking...");
   
   try {
     const app = express();
@@ -15,13 +15,19 @@ export const startWebServer = async (port: number) => {
     
     app.use(express.json());
 
-    // Debug Middleware: Log every request
+    // Logging middleware with Error Capture
     app.use((req, res, next) => {
-      console.log(`📡 Incoming: ${req.method} ${req.url}`);
+      console.log(`📡 ${req.method} ${req.url}`);
+      const oldJson = res.json;
+      res.json = function(data) {
+        if (res.statusCode >= 400) {
+          console.error(`❌ API ERROR on ${req.url}:`, JSON.stringify(data));
+        }
+        return oldJson.call(this, data);
+      };
       next();
     });
 
-    // Mount routers on both root and /api to ensure frontend finds them
     app.use('/api', apiRouter.router);
     app.use('/', apiRouter.router);
     
@@ -29,7 +35,6 @@ export const startWebServer = async (port: number) => {
     app.use(express.static(uiPath));
     
     app.get('*', (req, res) => {
-      // Don't intercept API calls with index.html
       if (req.url.startsWith('/api/') || req.url === '/voices' || req.url === '/music') {
         return res.status(404).json({ error: 'API route not found' });
       }
@@ -40,7 +45,7 @@ export const startWebServer = async (port: number) => {
       console.log("🚀 Server logic active on port " + port);
     });
   } catch (error) {
-    console.error("❌ Assembly Error:", error);
+    console.error("❌ Fatal Assembly Error:", error);
   }
 };
 
