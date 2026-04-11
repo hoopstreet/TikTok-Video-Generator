@@ -8,7 +8,7 @@ import { kokoroModelPrecision, whisperModels } from "./types/shorts";
 const defaultLogLevel: pino.Level = "info";
 const defaultPort = 3123;
 const whisperVersion = "1.7.1";
-const defaultWhisperModel: whisperModels = "medium.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
+const defaultWhisperModel: whisperModels = "base.en"; // possible options: "tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "base.en", "large-v1", "large-v2", "large-v3", "large-v3-turbo"
 
 // Create the global logger
 const versionNumber = process.env.npm_package_version;
@@ -45,7 +45,7 @@ export class Config {
   public devMode: boolean;
   public whisperVersion: string = whisperVersion;
   public whisperModel: whisperModels = defaultWhisperModel;
-  public kokoroModelPrecision: kokoroModelPrecision = "fp32";
+  public kokoroModelPrecision: kokoroModelPrecision = "fp16";
 
   // docker-specific, performance-related settings to prevent memory issues
   public concurrency?: number;
