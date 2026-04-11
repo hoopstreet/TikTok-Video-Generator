@@ -7,13 +7,13 @@ const port = process.env.PORT || 7860;
 
 app.use(express.json());
 
-// Serve static files from the 'static' directory
-// This ensures that /css, /js, and /images are all accessible
-app.use(express.static(path.join(process.cwd(), "static")));
+// Vite builds the UI into the 'dist' folder by default
+const distPath = path.join(process.cwd(), "dist");
 
-// Specific route to ensure index.html is served at the root
+app.use(express.static(distPath));
+
 app.get("/", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "static", "index.html"));
+    res.sendFile(path.join(distPath, "index.html"));
 });
 
 app.get("/health", (req, res) => {
