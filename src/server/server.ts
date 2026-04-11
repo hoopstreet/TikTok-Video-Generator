@@ -4,17 +4,16 @@ import os from "os";
 
 const app = express();
 const port = process.env.PORT || 7860;
-export const baseDataPath = path.join(os.tmpdir(), "tiktok-gen");
 
 app.use(express.json());
 
-// 1. This serves your UI files (the blue web ui)
-// Make sure your UI files are actually in the /static folder
+// Serve static files from the 'static' directory
+// This ensures that /css, /js, and /images are all accessible
 app.use(express.static(path.join(process.cwd(), "static")));
 
-// 2. Fallback route if index.html isn't found
-app.get("/status", (req, res) => {
-    res.json({ status: "API is Running", storage: baseDataPath });
+// Specific route to ensure index.html is served at the root
+app.get("/", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "static", "index.html"));
 });
 
 app.get("/health", (req, res) => {
