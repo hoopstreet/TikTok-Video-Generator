@@ -8,20 +8,21 @@ export const baseDataPath = path.join(os.tmpdir(), "tiktok-gen");
 
 app.use(express.json());
 
-// Serve the static files from your 'static' or 'dist' folder
+// 1. This serves your UI files (the blue web ui)
+// Make sure your UI files are actually in the /static folder
 app.use(express.static(path.join(process.cwd(), "static")));
 
-// Root route - redirect to health or index
-app.get("/", (req, res) => {
-    res.send("<h1>TikTok Video Generator API is Running</h1><p>Check /health for status.</p>");
+// 2. Fallback route if index.html isn't found
+app.get("/status", (req, res) => {
+    res.json({ status: "API is Running", storage: baseDataPath });
 });
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", port, baseDataPath });
+    res.json({ status: "ok" });
 });
 
 export const startWebServer = () => {
     app.listen(port, "0.0.0.0", () => {
-        console.log(`🌐 Server running on port ${port}`);
+        console.log(`🌐 UI/API running on port ${port}`);
     });
 };
