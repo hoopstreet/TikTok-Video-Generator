@@ -12,7 +12,7 @@ import { Remotion } from '../short-creator/libraries/Remotion';
 import { PexelsAPI } from '../short-creator/libraries/Pexels'; 
 
 // Guessed Paths - update these if the 'find' command above shows different results
-import { FFMpeg } from '../short-creator/libraries/ffmpeg'; 
+import { FFMpeg } from '../short-creator/libraries/FFmpeg'; 
 import { MusicManager } from '../short-creator/music/MusicManager'; 
 
 export const startWebServer = async (port: number) => {
