@@ -5,6 +5,7 @@ ARG BASE_CUDA_RUN_CONTAINER=nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_V
 
 # Ref: https://github.com/ggml-org/whisper.cpp
 FROM ${BASE_CUDA_DEV_CONTAINER} AS install-whisper
+RUN pip install --upgrade huggingface_hub
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
@@ -19,6 +20,7 @@ RUN GGML_CUDA=1 make -j
 RUN sh ./models/download-ggml-model.sh medium.en
 
 FROM ${BASE_CUDA_RUN_CONTAINER} AS base
+RUN pip install --upgrade huggingface_hub
 
 # install node
 RUN apt-get update && apt-get install -y \
@@ -69,11 +71,13 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 
 FROM base AS prod-deps
+RUN pip install --upgrade huggingface_hub
 COPY package.json pnpm-lock.yaml* /app/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --no-frozen-lockfile
 RUN pnpm install --prefer-offline --no-cache --prod
 
 FROM prod-deps AS build
+RUN pip install --upgrade huggingface_hub
 COPY tsconfig.json /app
 COPY tsconfig.build.json /app
 COPY vite.config.ts /app
@@ -82,6 +86,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --no-frozen-lockf
 RUN pnpm build
 
 FROM base
+RUN pip install --upgrade huggingface_hub
 COPY static /app/static
 COPY --from=install-whisper /app/data/libs/whisper /app/data/libs/whisper
 COPY --from=prod-deps /app/node_modules /app/node_modules
