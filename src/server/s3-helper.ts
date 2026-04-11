@@ -1,20 +1,25 @@
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs-extra";
-import path from "path";
 
-// This is the path where your HF Bucket is mounted (check your HF settings)
-const MOUNT_PATH = process.env.HF_BUCKET_MOUNT_PATH || '/data';
+const s3Client = new S3Client({
+    region: "auto",
+    endpoint: process.env.S3_ENDPOINT || 'https://s3.amazonaws.com',
+    credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY || '',
+        secretAccessKey: process.env.S3_SECRET_KEY || '',
+    },
+});
 
 export const uploadVideo = async (filePath: string, fileName: string) => {
-    const destination = path.join(MOUNT_PATH, 'videos', fileName);
-    
-    // Ensure the destination directory exists in the bucket
-    await fs.ensureDir(path.join(MOUNT_PATH, 'videos'));
-    
-    // Copy the file from /tmp to the mounted bucket
-    await fs.copy(filePath, destination);
-    
-    console.log(`✅ Video saved to bucket: ${destination}`);
-    
-    // Return the path or a signed URL if your setup supports it
-    return destination;
+    const fileStream = fs.createReadStream(filePath);
+    const command = new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: `videos/${fileName}`,
+        Body: fileStream,
+        ContentType: "video/mp4"
+    });
+
+    await s3Client.send(command);
+    // This returns the public URL so the HF frontend can display it
+    return `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}/videos/${fileName}`;
 };
