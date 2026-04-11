@@ -7,6 +7,10 @@ export class Kokoro implements KokoroAPI {
     console.log("Initializing Kokoro with precision:", precision);
   }
 
+  public listAvailableVoices(): string[] {
+    return ['af_heart', 'af_bella', 'af_nicole', 'af_sky', 'am_adam', 'am_michael', 'bf_isabelle', 'bf_emma', 'bm_george', 'bm_lewis'];
+  }
+
   public async generate(text: string, voice: string): Promise<ArrayBuffer> {
     // This is the core logic that needs the buffer cast
     const audio = await (this.model as any).generate(text, voice);
