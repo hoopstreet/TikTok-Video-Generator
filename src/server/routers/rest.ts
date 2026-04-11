@@ -12,32 +12,43 @@ export class APIRouter {
   }
 
   private setupRoutes() {
+    // 1. Trigger Video Generation
     this.router.post("/short-video", async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const runpodApiKey = process.env.RUNPOD_API_KEY;
         const endpointId = process.env.RUNPOD_ENDPOINT_ID;
-
-        if (!runpodApiKey || !endpointId) {
-          throw new Error("Missing RunPod configuration");
-        }
-
-        logger.info("📡 Forwarding to RunPod...");
-
         const response = await axios.post(
           `https://api.runpod.ai/v2/${endpointId}/run`,
           { input: req.body },
           { headers: { Authorization: `Bearer ${runpodApiKey}` } }
         );
-
-        // RunPod returns { id: "job-id", status: "IN_QUEUE" }
-        // The UI expects { videoId: "some-id" }
-        res.status(201).json({
-          videoId: response.data.id
-        });
-        
+        res.status(201).json({ videoId: response.data.id });
       } catch (error: any) {
-        logger.error(error.message, "RunPod Forwarding Error");
         res.status(500).json({ error: error.message });
+      }
+    });
+
+    // 2. Check Video Status (The "Unknown" Fix)
+    this.router.get("/short-video/:id", async (req: ExpressRequest, res: ExpressResponse) => {
+      try {
+        const runpodApiKey = process.env.RUNPOD_API_KEY;
+        const endpointId = process.env.RUNPOD_ENDPOINT_ID;
+        const jobId = req.params.id;
+
+        const response = await axios.get(
+          `https://api.runpod.ai/v2/${endpointId}/status/${jobId}`,
+          { headers: { Authorization: `Bearer ${runpodApiKey}` } }
+        );
+
+        // Map RunPod status to UI status
+        const runpodStatus = response.data.status; 
+        let uiStatus = "processing";
+        if (runpodStatus === "COMPLETED") uiStatus = "ready";
+        if (runpodStatus === "FAILED") uiStatus = "error";
+
+        res.json({ status: uiStatus, downloadUrl: response.data.output });
+      } catch (error) {
+        res.json({ status: "processing" });
       }
     });
   }
