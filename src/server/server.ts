@@ -1,37 +1,40 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { restRouter } from "./routers/rest";
-// import { mcpRouter } from "./routers/mcp"; // Add if you need MCP support too
+import { APIRouter } from "./routers/rest";
+import { ShortCreator } from "../short-creator/ShortCreator";
+import { Config } from "../config";
 
 const app = express();
-const port = process.env.PORT || 7860;
-
 app.use(express.json());
+
+// Initialize Dependencies
+const config = new Config();
+const shortCreator = new ShortCreator(config);
+const api = new APIRouter(config, shortCreator);
 
 const uiPath = path.join(process.cwd(), "dist/ui");
 
-// 1. Serve static files from the Vite build
+// 1. Serve UI
 app.use(express.static(uiPath));
 
-// 2. Connect your REAL API routes
-app.use("/api", restRouter);
+// 2. Connect the initialized Router
+app.use("/api", api.router);
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", port: port, engine: "rest" });
+    res.json({ status: "ok", engine: "initialized" });
 });
 
-// 3. Catch-all for React Router navigation
 app.get("*", (req, res) => {
     const indexPath = path.join(uiPath, "index.html");
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send("UI build missing. Check GitHub Actions.");
+        res.status(404).send("UI build missing.");
     }
 });
 
-export const startWebServer = () => {
+export const startWebServer = (port: number) => {
     app.listen(port, "0.0.0.0", () => {
         console.log(`🌐 UI/API unified on port ${port}`);
     });
