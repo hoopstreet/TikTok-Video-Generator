@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs-extra';
-import { Config } from '../config/Config'; // Confirming path via your grep later
+import { Config } from '../config'; // Confirming path via your grep later
 import { ShortCreator } from '../short-creator/ShortCreator';
 import { APIRouter } from './routers/rest';
 
