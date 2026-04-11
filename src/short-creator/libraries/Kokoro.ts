@@ -1,12 +1,21 @@
-import path from 'path';
-import fs from 'fs-extra';
+import { pipeline } from '@xenova/transformers';
 
 export class Kokoro {
+  private model: any = null;
   private precision: string;
 
   constructor(precision: string = 'fp16') {
     this.precision = precision;
-    console.log(`🎙️ Kokoro initialized with precision: ${this.precision}`);
+    console.log(`🎙️ Kokoro initializing with precision: ${precision}`);
+  }
+
+  private async initModel() {
+    if (!this.model) {
+      // Loading from Hugging Face Hub as defined in your config
+      this.model = await pipeline('text-to-speech', 'onnx-community/Kokoro-82M-v1.0-ONNX', {
+        quantized: this.precision === 'fp16',
+      });
+    }
   }
 
   public listAvailableVoices(): string[] {
@@ -14,16 +23,11 @@ export class Kokoro {
   }
 
   public async generate(text: string, voice: string): Promise<ArrayBuffer> {
-    console.log(`🔊 Kokoro generating audio for: "${text.substring(0, 20)}..." using voice: ${voice}`);
+    await this.initModel();
+    console.log(`🔊 Kokoro generating audio for: "${text.substring(0, 20)}..."`);
     
-    // Safety check to prevent the 'undefined' error
-    try {
-      // Mocking the buffer return for now to stabilize the pipeline
-      // Replace this with your actual ONNX session call if you have it
-      return new ArrayBuffer(8); 
-    } catch (error) {
-      console.error("❌ Kokoro Generation Error:", error);
-      throw error;
-    }
+    const output = await this.model(text, { speaker_id: voice });
+    // Convert the float32 array output to an ArrayBuffer
+    return output.audio.buffer;
   }
 }
