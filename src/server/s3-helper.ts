@@ -1,25 +1,24 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import fs from "fs-extra";
+import { exec } from "child_process";
+import path from "path";
+import util from "util";
 
-const s3Client = new S3Client({
-    region: "auto",
-    endpoint: process.env.S3_ENDPOINT || 'https://s3.amazonaws.com',
-    credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY || '',
-        secretAccessKey: process.env.S3_SECRET_KEY || '',
-    },
-});
+const execPromise = util.promisify(exec);
 
 export const uploadVideo = async (filePath: string, fileName: string) => {
-    const fileStream = fs.createReadStream(filePath);
-    const command = new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: `videos/${fileName}`,
-        Body: fileStream,
-        ContentType: "video/mp4"
-    });
+    // We use the HF CLI to upload to the bucket handle
+    // Format: hf buckets cp [local] hf://buckets/[owner]/[bucket-name]/[path]
+    const bucketHandle = "hf://buckets/hoopstreet/TikTok-Video-Generator-storage";
+    const remotePath = `${bucketHandle}/videos/${fileName}`;
 
-    await s3Client.send(command);
-    // This returns the public URL so the HF frontend can display it
-    return `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}/videos/${fileName}`;
+    try {
+        console.log(`🚀 Syncing to HF Bucket: ${fileName}`);
+        // Ensure you have HF_TOKEN set in RunPod Env Vars
+        await execPromise(`hf buckets cp ${filePath} ${remotePath}`);
+        
+        // Return the browser-viewable URL
+        return `https://huggingface.co/buckets/hoopstreet/TikTok-Video-Generator-storage/videos/${fileName}`;
+    } catch (error) {
+        console.error("❌ HF Bucket Upload Failed:", error);
+        throw error;
+    }
 };
