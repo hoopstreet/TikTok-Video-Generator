@@ -1,10 +1,10 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs-extra';
+import os from 'os';
 import { Config } from '../config';
 import { ShortCreator } from '../short-creator/ShortCreator';
 import { APIRouter } from './routers/rest';
-
 import { Kokoro } from '../short-creator/libraries/Kokoro';
 import { Whisper } from '../short-creator/libraries/Whisper';
 import { Remotion } from '../short-creator/libraries/Remotion';
@@ -13,16 +13,16 @@ import { FFMpeg } from '../short-creator/libraries/FFmpeg';
 import { MusicManager } from '../short-creator/music'; 
 
 export const startWebServer = async (port: number) => {
-  console.log("🏗️  Assembling Full AI Pipeline...");
+  console.log("🏗️ Assembling Full AI Pipeline...");
   const config = new Config();
   
-  if (!config.dataDirPath) {
-     (config as any).dataDirPath = path.join(process.cwd(), 'data');
-     (config as any).videosDirPath = path.join((config as any).dataDirPath, 'videos');
-  }
+  // USE SYSTEM TEMP FOR ALL WRITES - Guaranteed writable on RunPod/HF
+  const baseDataPath = path.join(os.tmpdir(), 'tiktok-gen');
+  (config as any).dataDirPath = baseDataPath;
+  (config as any).videosDirPath = path.join(baseDataPath, 'videos');
 
   [config.dataDirPath, config.videosDirPath, 'temp'].forEach(dir => {
-    if (dir) fs.ensureDirSync(dir);
+    fs.ensureDirSync(dir);
   });
 
   try {
@@ -43,7 +43,6 @@ export const startWebServer = async (port: number) => {
     app.use('/api', apiRouter.router);
     app.use('/', apiRouter.router);
     
-    // FLEXIBLE UI PATHING
     const possibleUiPaths = [
       path.join(process.cwd(), 'dist', 'ui'),
       path.join(process.cwd(), 'dist'),
@@ -57,7 +56,7 @@ export const startWebServer = async (port: number) => {
     app.get('*', (req, res) => {
       const indexPath = path.join(uiPath, 'index.html');
       if (fs.existsSync(indexPath)) return res.sendFile(indexPath);
-      res.status(404).send("Frontend build not found. Check Hugging Face build logs.");
+      res.status(404).send("Frontend build not found.");
     });
 
     app.listen(port, "0.0.0.0", () => {
@@ -65,6 +64,7 @@ export const startWebServer = async (port: number) => {
     });
   } catch (error) {
     console.error("❌ Fatal Assembly Error:", error);
+    process.exit(1); // Force exit so RunPod knows it failed
   }
 };
 
