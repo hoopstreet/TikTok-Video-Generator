@@ -1,21 +1,31 @@
 import express from 'express';
 import path from 'path';
-import { Config } from '../config';
+import fs from 'fs-extra';
+import { Config } from '../config/Config'; // Confirming path via your grep later
 import { ShortCreator } from '../short-creator/ShortCreator';
 import { APIRouter } from './routers/rest';
 
 export const startWebServer = async (port: number) => {
-  console.log("🏗️  Assembling Express app with Error Tracking...");
+  console.log("🏗️  Assembling Express app with Pre-Flight checks...");
   
+  // Ensure necessary directories exist
+  const dirs = ['static/music', 'out', 'temp', 'dist/ui'];
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      console.log(`📂 Creating missing directory: ${dir}`);
+      fs.ensureDirSync(dir);
+    }
+  });
+
   try {
     const app = express();
+    // Path check for Config - update if your grep found it elsewhere
     const config = new Config();
     const shortCreator = new ShortCreator(config);
     const apiRouter = new APIRouter(config, shortCreator);
     
     app.use(express.json());
 
-    // Logging middleware with Error Capture
     app.use((req, res, next) => {
       console.log(`📡 ${req.method} ${req.url}`);
       const oldJson = res.json;
