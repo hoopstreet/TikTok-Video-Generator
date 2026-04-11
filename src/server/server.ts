@@ -1,31 +1,41 @@
 import express from "express";
 import path from "path";
-import os from "os";
+import fs from "fs";
 
 const app = express();
 const port = process.env.PORT || 7860;
 
 app.use(express.json());
 
-// The path where the built UI lives
-const distPath = path.join(process.cwd(), "dist");
+// Identify possible UI locations
+const paths = [
+    path.join(process.cwd(), "dist"),
+    path.join(process.cwd(), "static"),
+    path.join(__dirname, "../../dist"),
+    path.join(__dirname, "../../static")
+];
 
-// 1. Serve static files from dist
-app.use(express.static(distPath));
+// Find the first path that actually exists
+const uiPath = paths.find(p => fs.existsSync(p)) || paths[0];
+console.log(`📂 Serving UI from: ${uiPath}`);
 
-// 2. Health check
+app.use(express.static(uiPath));
+
 app.get("/health", (req, res) => {
-    res.json({ status: "ok" });
+    res.json({ status: "ok", ui_path: uiPath });
 });
 
-// 3. Catch-all: Send index.html for any request that doesn't match a file
-// This is critical for React Router/Vite apps
 app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
+    const indexPath = path.join(uiPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send("<h1>UI Not Found</h1><p>The build folder is missing index.html. Check Docker build logs.</p>");
+    }
 });
 
 export const startWebServer = () => {
     app.listen(port, "0.0.0.0", () => {
-        console.log(`🌐 UI/API running on port ${port}`);
+        console.log(`🌐 Server active on port ${port}`);
     });
 };
