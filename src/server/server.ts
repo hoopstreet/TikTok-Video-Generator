@@ -1,28 +1,25 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { APIRouter } from "./routers/rest";
-import { ShortCreator } from "../short-creator/ShortCreator";
-import { Config } from "../config";
+import { restRouter } from "./routers/rest";
 
 const app = express();
 app.use(express.json());
-
-// Initialize Dependencies
-const config = new Config();
-const shortCreator = new ShortCreator(config);
-const api = new APIRouter(config, shortCreator);
 
 const uiPath = path.join(process.cwd(), "dist/ui");
 
 // 1. Serve UI
 app.use(express.static(uiPath));
 
-// 2. Connect the initialized Router
-app.use("/api", api.router);
+// 2. Connect the Proxy Router
+app.use("/api", restRouter);
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", engine: "initialized" });
+    res.json({ 
+        status: "ok", 
+        mode: "proxy-to-runpod",
+        endpoint: process.env.RUNPOD_ENDPOINT_ID ? "configured" : "missing"
+    });
 });
 
 app.get("*", (req, res) => {
@@ -36,6 +33,6 @@ app.get("*", (req, res) => {
 
 export const startWebServer = (port: number) => {
     app.listen(port, "0.0.0.0", () => {
-        console.log(`🌐 UI/API unified on port ${port}`);
+        console.log(`🌐 Proxy Server active on port ${port}`);
     });
 };
