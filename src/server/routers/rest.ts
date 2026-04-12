@@ -16,9 +16,16 @@ export class APIRouter {
       try {
         const runpodApiKey = process.env.RUNPOD_API_KEY;
         const endpointId = process.env.RUNPOD_ENDPOINT_ID;
+        
+        // Ensure voice defaults to a Tagalog profile if not specified
+        const payload = {
+          ...req.body,
+          voiceId: req.body.voiceId || "fil-PH-Wavenet-A"
+        };
+
         const response = await axios.post(
           `https://api.runpod.ai/v2/${endpointId}/run`,
-          { input: req.body },
+          { input: payload },
           { headers: { Authorization: `Bearer ${runpodApiKey}` } }
         );
         res.status(201).json({ videoId: response.data.id });
@@ -38,17 +45,10 @@ export class APIRouter {
           { headers: { Authorization: `Bearer ${runpodApiKey}` } }
         );
 
-        logger.info(`📊 RunPod Job ${jobId} Status: ${response.data.status}`);
-
-        const runpodStatus = response.data.status;
-        
-        if (runpodStatus === "COMPLETED") {
-          return res.json({ status: "ready", url: response.data.output });
-        } else if (runpodStatus === "FAILED") {
-          return res.json({ status: "error", message: response.data.error });
-        } else {
-          return res.json({ status: "processing" });
-        }
+        const status = response.data.status;
+        if (status === "COMPLETED") return res.json({ status: "ready", url: response.data.output });
+        if (status === "FAILED") return res.json({ status: "error" });
+        return res.json({ status: "processing" });
       } catch (error) {
         res.json({ status: "processing" });
       }
