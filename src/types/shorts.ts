@@ -1,6 +1,8 @@
 export enum VoiceId {
     fish_ate_budol = "fish-ate-budol",
     fish_kuya_tech = "fish-kuya-tech",
+    fish_ate_budol = "fish-ate-budol",
+    fish_kuya_tech = "fish-kuya-tech",
     af_heart = "af_heart",
     af_alloy = "af_alloy",
     af_aoede = "af_aoede",
