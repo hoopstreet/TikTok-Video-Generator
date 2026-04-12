@@ -12,7 +12,6 @@ export class APIRouter {
   }
 
   private setupRoutes() {
-    // 1. Trigger Video Generation
     this.router.post("/short-video", async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const runpodApiKey = process.env.RUNPOD_API_KEY;
@@ -28,8 +27,8 @@ export class APIRouter {
       }
     });
 
-    // 2. Check Video Status (The "Unknown" Fix)
-    this.router.get("/short-video/:id", async (req: ExpressRequest, res: ExpressResponse) => {
+    // CRITICAL FIX: The UI calls this to check status
+    this.router.get("/video-status/:id", async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const runpodApiKey = process.env.RUNPOD_API_KEY;
         const endpointId = process.env.RUNPOD_ENDPOINT_ID;
@@ -40,13 +39,16 @@ export class APIRouter {
           { headers: { Authorization: `Bearer ${runpodApiKey}` } }
         );
 
-        // Map RunPod status to UI status
-        const runpodStatus = response.data.status; 
-        let uiStatus = "processing";
-        if (runpodStatus === "COMPLETED") uiStatus = "ready";
-        if (runpodStatus === "FAILED") uiStatus = "error";
-
-        res.json({ status: uiStatus, downloadUrl: response.data.output });
+        const runpodStatus = response.data.status;
+        
+        // Map RunPod's actual state to what the UI expects
+        if (runpodStatus === "COMPLETED") {
+          return res.json({ status: "ready", url: response.data.output });
+        } else if (runpodStatus === "FAILED") {
+          return res.json({ status: "error" });
+        } else {
+          return res.json({ status: "processing" });
+        }
       } catch (error) {
         res.json({ status: "processing" });
       }
