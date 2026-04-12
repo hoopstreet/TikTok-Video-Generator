@@ -41,6 +41,8 @@ export const sceneInput = z.object({
 export type SceneInput = z.infer<typeof sceneInput>;
 
 export enum VoiceEnum {
+  fish_ate_budol = "fish_ate_budol",
+  fish_kuya_tech = "fish_kuya_tech",
   af_heart = "af_heart",
   af_alloy = "af_alloy",
   af_aoede = "af_aoede",

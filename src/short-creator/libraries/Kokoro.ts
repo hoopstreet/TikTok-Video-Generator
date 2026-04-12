@@ -1,4 +1,4 @@
-import { ''} from "../../types/shorts";
+import { VoiceEnum } from "../../types/shorts";
 
 export const KOKORO_VOICES = [
   { id: 'fish_ate_budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
