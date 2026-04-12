@@ -17,10 +17,13 @@ export class APIRouter {
         const runpodApiKey = process.env.RUNPOD_API_KEY;
         const endpointId = process.env.RUNPOD_ENDPOINT_ID;
         
-        // Ensure voice defaults to a Tagalog profile if not specified
+        // Inject Fish Speech specific defaults for the PH market
         const payload = {
           ...req.body,
-          voiceId: req.body.voiceId || "fil-PH-Wavenet-A"
+          voice_engine: req.body.voice_engine || "fish-speech",
+          voiceId: req.body.voiceId || "fish-speech-taglish-ate",
+          // Example of adding expressive tags to the prompt
+          emotion_tag: req.body.emotion || "excited" 
         };
 
         const response = await axios.post(
