@@ -27,7 +27,6 @@ export class APIRouter {
       }
     });
 
-    // CRITICAL FIX: The UI calls this to check status
     this.router.get("/video-status/:id", async (req: ExpressRequest, res: ExpressResponse) => {
       try {
         const runpodApiKey = process.env.RUNPOD_API_KEY;
@@ -39,13 +38,14 @@ export class APIRouter {
           { headers: { Authorization: `Bearer ${runpodApiKey}` } }
         );
 
+        logger.info(`📊 RunPod Job ${jobId} Status: ${response.data.status}`);
+
         const runpodStatus = response.data.status;
         
-        // Map RunPod's actual state to what the UI expects
         if (runpodStatus === "COMPLETED") {
           return res.json({ status: "ready", url: response.data.output });
         } else if (runpodStatus === "FAILED") {
-          return res.json({ status: "error" });
+          return res.json({ status: "error", message: response.data.error });
         } else {
           return res.json({ status: "processing" });
         }
