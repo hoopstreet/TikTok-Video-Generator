@@ -41,8 +41,6 @@ export const sceneInput = z.object({
 export type SceneInput = z.infer<typeof sceneInput>;
 
 export enum VoiceEnum {
-    { id: 'fish_ate_budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
-    { id: 'fish_kuya_tech', name: 'Kuya (Fish: Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' },
   af_heart = "af_heart",
   af_alloy = "af_alloy",
   af_aoede = "af_aoede",
@@ -109,8 +107,6 @@ export const renderConfig = z.object({
   voice: z
     .nativeEnum(VoiceEnum)
     .optional()
-    { id: 'fish_ate_budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
-    { id: 'fish_kuya_tech', name: 'Kuya (Fish: Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' },
     .describe("Voice to be used for the speech, default is af_heart"),
   orientation: z
     .nativeEnum(OrientationEnum)

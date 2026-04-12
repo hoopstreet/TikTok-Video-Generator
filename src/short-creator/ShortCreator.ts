@@ -110,10 +110,6 @@ export class ShortCreator {
     for (const scene of inputScenes) {
       const audio = await this.kokoro.generate(
         scene.text,
-    { id: 'fish_ate_budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
-    { id: 'fish_kuya_tech', name: 'Kuya (Fish: Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' },
-    { id: 'fish_ate_budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
-    { id: 'fish_kuya_tech', name: 'Kuya (Fish: Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' },
         config.voice ?? "af_heart",
       );
       let { audioLength } = audio;
