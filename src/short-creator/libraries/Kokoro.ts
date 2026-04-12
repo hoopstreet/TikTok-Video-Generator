@@ -9,7 +9,7 @@ export class Kokoro {
   }
 
   public listAvailableVoices(): string[] {
-    return ['af_heart', 'af_bella', 'af_nicole', 'af_sky', 'am_adam', 'am_michael', 'bf_isabelle', 'bf_emma', 'bm_george', 'bm_lewis'];
+    return ['af_heart', 'fish-ate-budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' }, { id: 'fish-kuya-tech', name: 'Kuya (Fish: Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' }, { id: 'af_bella', 'af_nicole', 'af_sky', 'am_adam', 'am_michael', 'bf_isabelle', 'bf_emma', 'bm_george', 'bm_lewis'];
   }
 
   public async generate(text: string, voice: string): Promise<ArrayBuffer> {

@@ -44,7 +44,7 @@ export enum VoiceEnum {
   af_heart = "af_heart",
   af_alloy = "af_alloy",
   af_aoede = "af_aoede",
-  af_bella = "af_bella",
+  fish-ate-budol' | 'fish-kuya-tech' | 'af_bella = "fish-ate-budol' | 'fish-kuya-tech' | 'af_bella",
   af_jessica = "af_jessica",
   af_kore = "af_kore",
   af_nicole = "af_nicole",
