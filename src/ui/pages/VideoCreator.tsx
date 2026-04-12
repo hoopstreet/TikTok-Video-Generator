@@ -45,6 +45,8 @@ const VideoCreator: React.FC = () => {
     music: MusicMoodEnum.chill,
     captionPosition: CaptionPositionEnum.bottom,
     captionBackgroundColor: "blue",
+    { id: 'fish_ate_budol', name: 'Ate (Fish: Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
+    { id: 'fish_kuya_tech', name: 'Kuya (Fish: Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' },
     voice: VoiceEnum.af_heart,
     orientation: OrientationEnum.portrait,
     musicVolume: MusicVolumeEnum.high,
