@@ -42,12 +42,12 @@ const VideoCreator: React.FC = () => {
   ]);
   const [config, setConfig] = useState<RenderConfig>({
     paddingBack: 1500,
-    music: MusicMoodEnum.chill,
-    captionPosition: CaptionPositionEnum.bottom,
-    captionBackgroundColor: "blue",
-    voice: VoiceEnum.af_heart,
+    music: MusicMoodEnum.excited,
+    captionPosition: CaptionPositionEnum.center,
+    captionBackgroundColor: "transparent",
+    voice: VoiceEnum.fish_ate_budol,
     orientation: OrientationEnum.portrait,
-    musicVolume: MusicVolumeEnum.high,
+    musicVolume: MusicVolumeEnum.low,
   });
 
   const [loading, setLoading] = useState(false);
