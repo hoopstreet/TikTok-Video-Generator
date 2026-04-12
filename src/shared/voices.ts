@@ -1,6 +1,22 @@
 export const PHILIPPINES_VOICES = [
-  { id: 'fish-speech-taglish-ate', name: 'Ate (Realistic Taglish)', lang: 'fil-PH', engine: 'fish-speech' },
-  { id: 'fish-speech-taglish-kuya', name: 'Kuya (Energetic Pinoy)', lang: 'fil-PH', engine: 'fish-speech' },
-  { id: 'fil-PH-Wavenet-A', name: 'Standard Female (Backup)', lang: 'fil-PH', engine: 'gtts' },
-  { id: 'fil-PH-Wavenet-B', name: 'Standard Male (Backup)', lang: 'fil-PH', engine: 'gtts' }
+  { 
+    id: 'fish-ate-budol', 
+    name: 'Ate (Budol/Excited)', 
+    lang: 'fil-PH', 
+    engine: 'fish-speech',
+    tags: '[excited] [clear voice] [high energy]'
+  },
+  { 
+    id: 'fish-kuya-tech', 
+    name: 'Kuya (Relaxed/Tech)', 
+    lang: 'fil-PH', 
+    engine: 'fish-speech',
+    tags: '[professional broadcast tone] [neutral]'
+  },
+  { 
+    id: 'fil-PH-Standard-A', 
+    name: 'Backup Female (Google)', 
+    lang: 'fil-PH', 
+    engine: 'gtts' 
+  }
 ];
