@@ -1,5 +1,5 @@
 export const PHILIPPINES_VOICES = [
-  // --- FISH SPEECH (SOTA Taglish) ---
+  // --- FISH SPEECH (New SOTA Taglish) ---
   { 
     id: 'fish-ate-budol', 
     name: 'Ate (Fish: Realistic Taglish)', 
@@ -15,25 +15,13 @@ export const PHILIPPINES_VOICES = [
     tags: '[professional broadcast tone]'
   },
   
-  // --- KOKORO (Fast & Smooth) ---
-  { 
-    id: 'af_bella', 
-    name: 'Bella (Kokoro: Smooth Female)', 
-    lang: 'en-US', 
-    engine: 'kokoro' 
-  },
-  { 
-    id: 'am_adam', 
-    name: 'Adam (Kokoro: Deep Male)', 
-    lang: 'en-US', 
-    engine: 'kokoro' 
-  },
+  // --- KOKORO (Existing Smooth English) ---
+  { id: 'af_heart', name: 'Heart (Kokoro)', lang: 'en-US', engine: 'kokoro' },
+  { id: 'af_bella', name: 'Bella (Kokoro)', lang: 'en-US', engine: 'kokoro' },
+  { id: 'af_nicole', name: 'Nicole (Kokoro)', lang: 'en-US', engine: 'kokoro' },
+  { id: 'am_adam', name: 'Adam (Kokoro)', lang: 'en-US', engine: 'kokoro' },
+  { id: 'am_onyx', name: 'Onyx (Kokoro)', lang: 'en-US', engine: 'kokoro' },
 
-  // --- GOOGLE (Legacy Fallback) ---
-  { 
-    id: 'fil-PH-Wavenet-A', 
-    name: 'Google Ate (Fallback)', 
-    lang: 'fil-PH', 
-    engine: 'gtts' 
-  }
+  // --- GOOGLE (Fallback) ---
+  { id: 'fil-PH-Standard-A', name: 'Standard Ate (Google)', lang: 'fil-PH', engine: 'gtts' }
 ];

@@ -6,33 +6,18 @@ export const restRouter = express.Router();
 restRouter.post("/short-video", async (req, res) => {
   try {
     const { text, voiceId, engine, emotion } = req.body;
-    let payload = {};
+    let payload = {
+      input: {
+        text: text,
+        voiceId: voiceId,
+        engine: engine || 'kokoro' // Default for backward compatibility
+      }
+    };
 
-    // 1. Route to Fish Speech
+    // Auto-format for Fish Speech logic
     if (engine === 'fish-speech') {
-      payload = {
-        input: {
-          text: `[${emotion || 'excited'}] ${text}`,
-          model: "s2-pro",
-          voice_engine: "fish-speech",
-          voiceId: voiceId || "fish-ate-budol"
-        }
-      };
-    } 
-    // 2. Route to Kokoro
-    else if (engine === 'kokoro') {
-      payload = {
-        input: {
-          model: "kokoro",
-          input: text,
-          voice: voiceId || "af_bella",
-          speed: 1.0
-        }
-      };
-    }
-    // 3. Default / Fallback
-    else {
-      payload = { input: req.body };
+      payload.input.text = `[${emotion || 'excited'}] ${text}`;
+      payload.input.model = "s2-pro";
     }
 
     const response = await axios.post(
@@ -49,16 +34,12 @@ restRouter.post("/short-video", async (req, res) => {
 });
 
 restRouter.get("/video-status/:id", async (req, res) => {
-  try {
-    const response = await axios.get(
-      `https://api.runpod.ai/v2/${process.env.RUNPOD_ENDPOINT_ID}/status/${req.params.id}`,
-      { headers: { Authorization: `Bearer ${process.env.RUNPOD_API_KEY}` } }
-    );
-    res.json({ 
-      status: response.data.status === "COMPLETED" ? "ready" : "processing",
-      url: response.data.output 
-    });
-  } catch (error) {
-    res.json({ status: "processing" });
-  }
+  const response = await axios.get(
+    `https://api.runpod.ai/v2/${process.env.RUNPOD_ENDPOINT_ID}/status/${req.params.id}`,
+    { headers: { Authorization: `Bearer ${process.env.RUNPOD_API_KEY}` } }
+  );
+  res.json({ 
+    status: response.data.status === "COMPLETED" ? "ready" : "processing",
+    url: response.data.output 
+  });
 });
