@@ -21,7 +21,7 @@ interface SceneFormData {
 
 const VideoCreator: React.FC = () => {
   const navigate = useNavigate();
-  const [scenes, setScenes] = useState<SceneFormData[]>([{ text: "", negativePrompt: "", imageURL: "" }]);
+  const [scenes, setScenes] = useState<SceneFormData[]>([{ text: "", negativePrompt: "low quality, blurry, distorted, glitch, color bleed, deformed, watermark, low resolution, messy textures", imageURL: "" }]);
   const [config, setConfig] = useState<RenderConfig>({
     paddingBack: 1500,
     music: MusicMoodEnum.excited,
@@ -55,7 +55,7 @@ const VideoCreator: React.FC = () => {
     fetchOptions();
   }, []);
 
-  const handleAddScene = () => setScenes([...scenes, { text: "", negativePrompt: "", imageURL: "" }]);
+  const handleAddScene = () => setScenes([...scenes, { text: "", negativePrompt: "low quality, blurry, distorted, glitch, color bleed, deformed, watermark, low resolution, messy textures", imageURL: "" }]);
   const handleRemoveScene = (index: number) => {
     if (scenes.length > 1) {
       const ns = [...scenes];
@@ -106,7 +106,7 @@ const VideoCreator: React.FC = () => {
             </Box>
             <Grid container spacing={3}>
               <Grid item xs={12}><TextField fullWidth label="Text" multiline rows={4} value={scene.text} onChange={(e) => handleSceneChange(index, "text", e.target.value)} required /></Grid>
-              <Grid item xs={12}><TextField fullWidth label="Negative Prompt" placeholder="e.g. glitches, color fade, blurry, deformed product" value={scene.negativePrompt} onChange={(e) => handleSceneChange(index, "negativePrompt", e.target.value)} /></Grid>
+              <Grid item xs={12}><TextField fullWidth label="Negative Prompt" placeholder="Niche tips: (Apparel: wrinkles, skin texture) (Tech: melted plastic, wrong ports) (General: blurry, watermark)" value={scene.negativePrompt} onChange={(e) => handleSceneChange(index, "negativePrompt", e.target.value)} /></Grid>
               <Grid item xs={12}>
                 <TextField fullWidth label="Product Reference (Image URL)*" type="url" value={scene.imageURL} onChange={(e) => handleSceneChange(index, "imageURL", e.target.value)} helperText="Direct link to product image" required />
               </Grid>
