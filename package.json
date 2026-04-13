@@ -1,10 +1,10 @@
 {
   "name": "short-video-maker",
-  "version": "1.4.0",
+  "version": "1.7.0",
   "description": "Creates short videos for TikTok, Instagram Reels, and YouTube Shorts using the Model Context Protocol (MCP) and a REST API.",
   "main": "index.js",
   "scripts": {
-    "build": "rimraf dist && (tsc --project tsconfig.build.json || echo 'Ignoring TS errors') && vite build",
+    "build": "rm -rf dist && (tsc --project tsconfig.build.json || echo 'Ignoring TS errors') && vite build",
     "dev": "vite build --watch | node --watch -r ts-node/register src/index.ts ",
     "start": "node dist/index.js",
     "test": "vitest",
