@@ -1,0 +1,37 @@
+name: Sync Dockerfile to Hugging Face
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'README.md'
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Push Dockerfile and README to HF Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # Configure Git
+          git config --global user.email "hoopstreet@users.noreply.github.com"
+          git config --global user.name "hoopstreet"
+          
+          # Clone the HF Space (shallow clone)
+          git clone https://hoopstreet:$HF_TOKEN@huggingface.co/spaces/hoopstreet/TikTok-Video-Generator hf_space
+          
+          # Copy only the files you want
+          cp Dockerfile hf_space/Dockerfile
+          cp README.md hf_space/README.md
+          
+          # Commit and Push back to HF
+          cd hf_space
+          git add Dockerfile README.md
+          git commit -m "Sync: Update Dockerfile/README from GitHub" || exit 0
+          git push origin main
