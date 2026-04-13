@@ -40,9 +40,8 @@ export enum MusicVolumeEnum {
 
 export interface SceneInput {
   text: string;
-  imageURL?: string;
+  imageURL: string;
   negative_prompt?: string;
-  searchTerms?: string[];
 }
 
 export interface RenderConfig {

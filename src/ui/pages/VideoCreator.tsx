@@ -78,7 +78,6 @@ const VideoCreator: React.FC = () => {
         text: s.text,
         negative_prompt: s.negativePrompt,
         imageURL: s.imageURL,
-        searchTerms: [],
       }));
       const res = await axios.post("/api/short-video", { scenes: apiScenes, config });
       navigate(`/video/${res.data.videoId}`);
@@ -138,4 +137,4 @@ const VideoCreator: React.FC = () => {
   );
 };
 export default VideoCreator;
-// Build Update: Monday Apr 13 19:48:00 UTC 2026
+// Build Update: Mon Apr 13 13:31:06 UTC 2026
