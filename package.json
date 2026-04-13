@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "test": "vitest",
     "ui:dev": "vite",
-    "ui:build": "vite build",
+    "ui:build": "vite build --base=./?v=1.8.0",
     "ui:preview": "vite preview"
   },
   "dependencies": {

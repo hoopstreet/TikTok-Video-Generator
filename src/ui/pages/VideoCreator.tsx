@@ -108,7 +108,7 @@ const VideoCreator: React.FC = () => {
               <Grid item xs={12}><TextField fullWidth label="Text" multiline rows={4} value={scene.text} onChange={(e) => handleSceneChange(index, "text", e.target.value)} required /></Grid>
               <Grid item xs={12}><TextField fullWidth label="Negative Prompt" placeholder="Niche tips: (Apparel: wrinkles, skin texture) (Tech: melted plastic, wrong ports) (General: blurry, watermark)" value={scene.negativePrompt} onChange={(e) => handleSceneChange(index, "negativePrompt", e.target.value)} /></Grid>
               <Grid item xs={12}>
-                <TextField fullWidth label="Product Reference (Image URL)*" type="url" value={scene.imageURL} onChange={(e) => handleSceneChange(index, "imageURL", e.target.value)} helperText="Direct link to product image" required />
+                <TextField fullWidth label="Product Reference (Image URL)*" type="url" value={scene.imageURL} onChange={(e) => handleSceneChange(index, "imageURL", e.target.value)} helperText="Ensure link ends in .jpg, .png, or .webp to avoid render failure" required />
               </Grid>
             </Grid>
           </Paper>
