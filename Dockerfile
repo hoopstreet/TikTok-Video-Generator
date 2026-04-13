@@ -9,5 +9,5 @@ WORKDIR /app
 
 EXPOSE 7860
 
-# This version uses a shell to check file existence before running
-CMD ["sh", "-c", "ls -R /app/dist && node /app/dist/server/index.js"]
+# Trying the root dist entry point which often handles sub-routing
+CMD ["node", "dist/index.js"]
