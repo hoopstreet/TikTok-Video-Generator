@@ -33,17 +33,20 @@ const VideoCreator: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [voices, setVoices] = useState<string[]>([]);
+  const [voices, setVoices] = useState<VoiceEnum[]>([]);
+  const [musicTags, setMusicTags] = useState<MusicMoodEnum[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const response = await axios.get("/api/voices");
-        // Ensure we always have an array to prevent .map() crashes
-        setVoices(Array.isArray(response.data) ? response.data : Object.values(VoiceEnum));
+        const [vResp, mResp] = await Promise.all([
+          axios.get("/api/voices"),
+          axios.get("/api/music-tags"),
+        ]);
+        setVoices(vResp.data);
+        setMusicTags(mResp.data);
       } catch (err) {
-        console.error("Voice fetch failed, using local enums");
-        setVoices(Object.values(VoiceEnum));
+        setError("Failed to load options. Please refresh the page.");
       } finally {
         setLoadingOptions(false);
       }
@@ -70,22 +73,15 @@ const VideoCreator: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Structure identical to n8n automation schema
-      const payload = {
-        scenes: scenes.map((s) => ({
-          text: s.text,
-          imageURL: s.imageURL,
-          searchTerms: [], // Kept for legacy backend compatibility
-        })),
-        config: {
-          ...config,
-          voice: config.voice || VoiceEnum.fish_ate_budol,
-        }
-      };
-      const res = await axios.post("/api/short-video", payload);
+      const apiScenes: SceneInput[] = scenes.map((s) => ({
+        text: s.text,
+        imageURL: s.imageURL,
+        searchTerms: [], // Pexels search totally removed
+      }));
+      const res = await axios.post("/api/short-video", { scenes: apiScenes, config });
       navigate(`/video/${res.data.videoId}`);
     } catch (err) {
-      setError("Sync Error: Backend unreachable or invalid payload.");
+      setError("Failed to create video. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -94,54 +90,44 @@ const VideoCreator: React.FC = () => {
   if (loadingOptions) return <Box display="flex" justifyContent="center" mt={10}><CircularProgress /></Box>;
 
   return (
-    <Box maxWidth="md" mx="auto" py={4} px={2}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: "bold" }}>TikTok Ad Creator</Typography>
+    <Box maxWidth="md" mx="auto" py={4}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>TikTok Ad Creator</Typography>
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
       <form onSubmit={handleSubmit}>
+        <Typography variant="h5" gutterBottom>Scenes</Typography>
         {scenes.map((scene, index) => (
-          <Paper key={index} variant="outlined" sx={{ p: 3, mb: 3, position: "relative" }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" color="textSecondary">Scene {index + 1}</Typography>
+          <Paper key={index} sx={{ p: 3, mb: 3 }} variant="outlined">
+            <Box display="flex" justifyContent="space-between" mb={2}>
+              <Typography variant="h6">Scene {index + 1}</Typography>
               {scenes.length > 1 && (
-                <IconButton onClick={() => handleRemoveScene(index)} color="error" size="small"><DeleteIcon /></IconButton>
+                <IconButton onClick={() => handleRemoveScene(index)} color="error"><DeleteIcon /></IconButton>
               )}
             </Box>
-            <TextField fullWidth label="Positive Prompt" multiline rows={3} value={scene.text} onChange={(e) => handleSceneChange(index, "text", e.target.value)} required sx={{ mb: 3 }} />
-            <TextField fullWidth label="Product Reference (Image URL)" value={scene.imageURL} onChange={(e) => handleSceneChange(index, "imageURL", e.target.value)} required />
+            <Grid container spacing={3}>
+              <Grid item xs={12}><TextField fullWidth label="Text" multiline rows={4} value={scene.text} onChange={(e) => handleSceneChange(index, "text", e.target.value)} required /></Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Product Reference (Image URL)*" value={scene.imageURL} onChange={(e) => handleSceneChange(index, "imageURL", e.target.value)} helperText="Direct link to product image" required />
+              </Grid>
+            </Grid>
           </Paper>
         ))}
-        <Button startIcon={<AddIcon />} onClick={handleAddScene} sx={{ mb: 4 }}>ADD SCENE</Button>
+        <Box display="flex" justifyContent="center" mb={4}><Button startIcon={<AddIcon />} onClick={handleAddScene}>Add Scene</Button></Box>
         <Divider sx={{ mb: 4 }} />
-        <Typography variant="h5" sx={{ mb: 3 }}>Video Configuration</Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12}><TextField fullWidth label="End Screen Padding (ms)" type="number" value={config.paddingBack} onChange={(e) => handleConfigChange("paddingBack", parseInt(e.target.value))} /></Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth><InputLabel>Music Mood</InputLabel>
-              <Select value={config.music} label="Music Mood" onChange={(e) => handleConfigChange("music", e.target.value)}>
-                {Object.values(MusicMoodEnum).map((m) => <MenuItem key={m} value={m}>{m}</MenuItem>)}
-              </Select>
-            </FormControl>
+        <Typography variant="h5" gutterBottom>Video Configuration</Typography>
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="End Screen Padding (ms)" type="number" value={config.paddingBack} onChange={(e) => handleConfigChange("paddingBack", parseInt(e.target.value))} InputProps={{ endAdornment: <InputAdornment position="end">ms</InputAdornment> }} /></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Music Mood</InputLabel><Select value={config.music} label="Music Mood" onChange={(e) => handleConfigChange("music", e.target.value)}>{Object.values(MusicMoodEnum).map((t) => (<MenuItem key={t} value={t}>{t}</MenuItem>))}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Caption Position</InputLabel><Select value={config.captionPosition} label="Caption Position" onChange={(e) => handleConfigChange("captionPosition", e.target.value)}>{Object.values(CaptionPositionEnum).map((p) => (<MenuItem key={p} value={p}>{p}</MenuItem>))}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><TextField fullWidth label="Caption Background Color" value={config.captionBackgroundColor} onChange={(e) => handleConfigChange("captionBackgroundColor", e.target.value)} /></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Default Voice</InputLabel><Select value={config.voice} label="Default Voice" onChange={(e) => handleConfigChange("voice", e.target.value)}>{Object.values(VoiceEnum).map((v) => (<MenuItem key={v} value={v}>{v}</MenuItem>))}</Select></FormControl></Grid>
+            <Grid item xs={12} sm={6}><FormControl fullWidth><InputLabel>Orientation</InputLabel><Select value={config.orientation} label="Orientation" onChange={(e) => handleConfigChange("orientation", e.target.value)}>{Object.values(OrientationEnum).map((o) => (<MenuItem key={o} value={o}>{o}</MenuItem>))}</Select></FormControl></Grid>
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth><InputLabel>Default Voice</InputLabel>
-              <Select value={config.voice} label="Default Voice" onChange={(e) => handleConfigChange("voice", e.target.value)}>
-                {(voices || []).map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth><InputLabel>Orientation</InputLabel>
-              <Select value={config.orientation} label="Orientation" onChange={(e) => handleConfigChange("orientation", e.target.value)}>
-                {Object.values(OrientationEnum).map((o) => <MenuItem key={o} value={o}>{o}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-        <Button type="submit" variant="contained" fullWidth size="large" disabled={loading} sx={{ mt: 6, py: 2, fontSize: "1.1rem" }}>
-          {loading ? <CircularProgress size={26} color="inherit" /> : "GENERATE AD"}
-        </Button>
+        </Paper>
+        <Box display="flex" justifyContent="center"><Button type="submit" variant="contained" size="large" disabled={loading} sx={{ minWidth: 200 }}>{loading ? <CircularProgress size={24} color="inherit" /> : "GENERATE AD"}</Button></Box>
       </form>
     </Box>
   );
 };
 export default VideoCreator;
+// Build Update: Monday Apr 13 18:42:09 UTC 2026
