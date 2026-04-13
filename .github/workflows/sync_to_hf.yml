@@ -19,19 +19,20 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Configure Git
           git config --global user.email "hoopstreet@users.noreply.github.com"
           git config --global user.name "hoopstreet"
           
-          # Clone the HF Space (shallow clone)
+          # Clone the HF Space
           git clone https://hoopstreet:$HF_TOKEN@huggingface.co/spaces/hoopstreet/TikTok-Video-Generator hf_space
           
-          # Copy only the files you want
-          cp Dockerfile hf_space/Dockerfile
-          cp README.md hf_space/README.md
-          
-          # Commit and Push back to HF
           cd hf_space
-          git add Dockerfile README.md
-          git commit -m "Sync: Update Dockerfile/README from GitHub" || exit 0
-          git push origin main
+          # Delete everything currently in the Space to ensure a clean slate
+          rm -rf *
+          
+          # Copy only the new versions from GitHub
+          cp ../Dockerfile .
+          cp ../README.md .
+          
+          git add .
+          git commit -m "Sync: Clean slate and update Dockerfile/README" || exit 0
+          git push origin main --force
