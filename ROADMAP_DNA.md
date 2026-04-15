@@ -84,3 +84,7 @@
 - **Discovery:** Internal React states use `Videos` (safe), Database uses `videos` (required).
 - **Automation Sync:** `n8n_trigger_payload.json` updated to `v2.0.0-stable`.
 - **Connectivity:** Heartbeat test confirmed (HTTP 200).
+
+### Phase 5.2: CDN Link Validation (Verified ✅)
+- **Constraint:** Supports TikTok `~tplv-resize-webp` patterns.
+- **Handling:** n8n must pass the full raw URL including all query tokens to ensure CDN access.

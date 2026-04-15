@@ -1,17 +1,13 @@
 {
-  "source_project": "TikTok-Prompt-Generator",
-  "external_ref_id": "product_scraper_id_001",
+  "template_id": "v2.0.0-stable",
   "scenes": [
     {
-      "text": "SCENE_1_POSITIVE_PROMPT",
-      "negative_prompt": "SCENE_1_NEGATIVE_PROMPT",
-      "image_url": "WEB_P_URL_FROM_SCRAPER"
+      "text": "Check out this TikTok Budol find!",
+      "image_url": "https://p16-oec-va.ibyteimg.com/tos-maliva-i-o3syd03w52-us/d5950928af544916a09eca3f684b036c~tplv-o3syd03w52-resize-webp:260:260.webp?dr=15582&t=555f072d&ps=933b5bde&shp=7745054a&shcp=9b759fb9&idc=my2&from=2001012042"
     }
   ],
   "config": {
     "voice": "fish_ate_budol",
-    "music_mood": "excited",
-    "output_storage": "huggingface_s3",
-    "db_logging": "supabase_video_table"
+    "music_mood": "excited"
   }
 }
