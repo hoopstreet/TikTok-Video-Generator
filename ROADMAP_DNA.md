@@ -44,3 +44,9 @@
 - **Status:** INITIALIZING 🚦
 - **Focus:** Building the n8n Workflow nodes to trigger RunPod via Hugging Face.
 - **Goal:** Fully hands-free video generation from TikTok shop scrapers to Supabase logs.
+
+### Phase 4: Production Scraper Mapping (Active 🛠️)
+- **Status:** INITIALIZING 🚦
+- **Focus:** Mapping TikTok Scraped data (Positive/Negative Prompts) to the Web UI.
+- **Workflow:** n8n Scraper -> Logic Transformation -> HF Web UI -> RunPod GPU.
+- **Key Fields:** `text`, `negative_prompt`, `image_url` (must end in .webp/.jpg/.png).

@@ -1,0 +1,18 @@
+{
+  "scenes": [
+    {
+      "text": "TEXT_FROM_POSITIVE_PROMPT",
+      "negative_prompt": "TEXT_FROM_NEGATIVE_PROMPT",
+      "image_url": "URL_FROM_IMAGE_URL"
+    }
+  ],
+  "config": {
+    "end_screen_padding": 1500,
+    "music_mood": "excited",
+    "caption_position": "center",
+    "caption_bg": "transparent",
+    "voice": "fish_ate_budol",
+    "orientation": "portrait",
+    "volume": "low"
+  }
+}
