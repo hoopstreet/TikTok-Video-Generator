@@ -68,3 +68,8 @@
 ## 🔗 Integrated Triggers
 1. **Manual:** Hugging Face Web UI (Direct to RunPod)
 2. **Automated:** n8n HTTP Node (Triggered by Prompt-Generator completion)
+
+## 🚩 Milestone: v2.0.0-stable (The Ecosystem Release)
+- **Status:** RELEASED 🚀
+- **Summary:** Integrated 3-project pipeline (Scraper -> Prompt -> Video).
+- **Logic Verified:** Supabase schema alignment, Babel UI stability, and RunPod connectivity.
