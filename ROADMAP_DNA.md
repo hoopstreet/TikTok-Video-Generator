@@ -78,3 +78,9 @@
 1. **URL Handling:** All `image_url` strings must be passed fully encoded to preserve TikTok CDN tokens.
 2. **Naming Convention:** STRICT lowercase for Supabase tables (`videos`) and columns (`id`, `video_url`).
 3. **Heartbeat:** n8n must send a GET request to the HF Space URL before initiating a POST task to ensure the container is awake.
+
+### Phase 5.1: Ecosystem Alignment (Complete ✅)
+- **Status:** VERIFIED
+- **Discovery:** Internal React states use `Videos` (safe), Database uses `videos` (required).
+- **Automation Sync:** `n8n_trigger_payload.json` updated to `v2.0.0-stable`.
+- **Connectivity:** Heartbeat test confirmed (HTTP 200).

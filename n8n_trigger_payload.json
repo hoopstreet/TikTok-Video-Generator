@@ -1,6 +1,6 @@
 {
   "job_type": "create_video",
-  "template_id": "v1.9.1-stable",
+  "template_id": "v2.0.0-stable",
   "payload": {
     "title": "Automated TikTok Test",
     "image_url": "https://huggingface.co/buckets/hoopstreet/TikTok-Video-Storage/assets/placeholder.jpg",
