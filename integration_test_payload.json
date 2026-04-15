@@ -1,0 +1,14 @@
+{
+  "project_source": "TikTok-Prompt-Generator",
+  "scenes": [
+    {
+      "text": "Check out this amazing budol find! Best quality and affordable.",
+      "negative_prompt": "blurry, low quality, distorted text, watermark",
+      "image_url": "https://p16-oec-va.ibyteimg.com/tos-maliva-i-o3syd03w52-us/d5950928af544916a09eca3f684b036c~tplv-o3syd03w52-resize-webp:260:260.webp"
+    }
+  ],
+  "config": {
+    "voice": "fish_ate_budol",
+    "music_mood": "excited"
+  }
+}

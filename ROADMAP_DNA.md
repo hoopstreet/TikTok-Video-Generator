@@ -50,3 +50,12 @@
 - **Focus:** Mapping TikTok Scraped data (Positive/Negative Prompts) to the Web UI.
 - **Workflow:** n8n Scraper -> Logic Transformation -> HF Web UI -> RunPod GPU.
 - **Key Fields:** `text`, `negative_prompt`, `image_url` (must end in .webp/.jpg/.png).
+
+## 🧩 Ecosystem Dependencies
+- **Upstream Data 1:** `TikTok-Product-Scraper` (Raw JSON/WebP)
+- **Upstream Data 2:** `TikTok-Prompt-Generator` (Positive/Negative Prompts)
+- **Downstream Result:** `TikTok-Video-Generator` -> Supabase `videos`
+
+### Phase 4.1: Inter-Project Handshake
+- **Status:** ACTIVE 🛠️
+- **Target:** Ensure the Video-Generator correctly parses prompts from the Prompt-Generator project.
