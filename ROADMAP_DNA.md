@@ -128,3 +128,10 @@
 - **Engine:** v2.0.0-DEBUG (Stable Core)
 - **Automation:** Phase 6.0 (Cloud-First)
 - **Status:** **READY FOR SCALING** 🚀
+
+### Phase 6.2: Version v2.4.0 "The Phoenix" 🦅
+- **Tag:** `v2.4.0`
+- **Milestone:** Full infrastructure recovery and automation hardening.
+- **Key Feature:** Hybrid Build Logic (iSH Stable Core + GitHub Action Automation).
+- **Architecture:** Decoupled binary assets from HF Sync via Orphan-Push logic.
+- **Status:** PRODUCTION READY.
