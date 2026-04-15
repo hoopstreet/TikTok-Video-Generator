@@ -110,3 +110,8 @@
 - **Deployment:** CUDA build path selected and versioned.
 - **Optimization:** .dockerignore active to keep context light.
 - **Goal Status:** Ready for Bulk TikTok Affiliate Content Generation.
+
+### Phase 5.5: Docker Size Reduction (Targeted 🎯)
+- **Goal:** Reduce Docker Hub image from 334GB to < 20GB.
+- **Method:** Layer squashing and cache purging in `main-cuda.Dockerfile`.
+- **Logic:** Combined RUN commands to prevent layer bloat.
