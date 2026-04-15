@@ -95,3 +95,36 @@
 - **Fix:** Upgraded `hf-sync.yml` to an **Orphan Push** strategy.
 - **Logic:** The workflow now strips all binary assets and only sends `Dockerfile`, `README`, and `DNA` to Hugging Face.
 - **Result:** Space remains <1MB while the full source (including music) stays safe on GitHub.
+
+---
+
+### Phase 6.1: The "Golden Thread" Infrastructure Upgrades 🧵
+*These upgrades were salvaged from Phase 5 and are now fully operational in the current Phase 6.0 hybrid architecture:*
+
+- **Upgraded S3 Asset Lifecycle (Phase 5.34/5.35):**
+    - **Logic:** Decoupled video storage from the container. All generated TikTok clips are now routed through the `hoopstreet/TikTok-Video-Storage` S3 mount.
+    - **Result:** Space rebuilds no longer wipe generated affiliate content.
+
+- **Supabase Edge "Janitor" v3 (Phase 5.32):**
+    - **Logic:** Automated database cleanup moved to `supabase/functions/janitor`.
+    - **Protocol:** Deployed via GitHub Actions (`supabase-deploy.yml`). No longer depends on local n8n or iSH cron jobs.
+
+- **Orphan-Branch Deployment (Phase 5.29/6.01):**
+    - **Logic:** Hugging Face Space is now a "Headless Runner."
+    - **Security:** The HF branch contains ZERO source code or large assets—only the `Dockerfile` pointer to Docker Hub.
+    - **Bypass:** Successfully circumvents the 10MB Git limit by excluding the `static/music` folder during sync.
+
+- **Serverless GPU Scaling (Phase 5.35):**
+    - **Logic:** RunPod endpoint `zoucgz75ukln9s` now pulls the exact `:latest-cuda` image confirmed by the iSH production check.
+    - **Environment:** Secrets (Supabase/S3) are injected at the RunPod Template level, keeping the local code clean of hardcoded keys.
+
+- **Build-Time Integrity (Phase 5.48/5.51):**
+    - **Logic:** Full-Stack build alignment ensures `tsc` (Server) and `vite` (UI) are compiled in the cloud before the image is pushed.
+    - **Fix:** Resolved the `MODULE_NOT_FOUND` error by baking the `dist/` folder into the Docker Hub image layers.
+
+---
+
+### 🛡️ VERIFIED PRODUCTION STATUS (2026-04-16)
+- **Engine:** v2.0.0-DEBUG (Stable Core)
+- **Automation:** Phase 6.0 (Cloud-First)
+- **Status:** **READY FOR SCALING** 🚀
