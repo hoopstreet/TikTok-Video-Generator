@@ -100,3 +100,8 @@
 - **Observation:** Large size may impact RunPod cold-start times.
 - **Action:** Future builds should use `.dockerignore` to exclude `/static/music` or heavy model weights if they can be downloaded at runtime.
 - Status: MONITORING 🔍
+
+### Phase 5.4: Latency & Cold-Start Monitoring
+- **Metric:** Target Trigger-to-Render start < 30s.
+- **Risk:** Docker image size (334GB) currently exceeds optimal pull speed.
+- **n8n Config:** Ensure "Timeout" in HTTP Request node is set to at least 120s to account for image pulls.
