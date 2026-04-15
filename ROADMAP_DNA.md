@@ -73,3 +73,8 @@
 - **Status:** RELEASED 🚀
 - **Summary:** Integrated 3-project pipeline (Scraper -> Prompt -> Video).
 - **Logic Verified:** Supabase schema alignment, Babel UI stability, and RunPod connectivity.
+
+## 🛡️ Production Safety Constraints (v2.0.0+)
+1. **URL Handling:** All `image_url` strings must be passed fully encoded to preserve TikTok CDN tokens.
+2. **Naming Convention:** STRICT lowercase for Supabase tables (`videos`) and columns (`id`, `video_url`).
+3. **Heartbeat:** n8n must send a GET request to the HF Space URL before initiating a POST task to ensure the container is awake.
