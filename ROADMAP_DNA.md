@@ -93,3 +93,9 @@
 - **Image Support:** Verified for complex TikTok CDN query strings.
 - **Automation:** n8n payload template confirmed.
 - **Deployment:** Tagged and pushed to GitHub main.
+
+### Phase 5.3: Image Optimization (Alert ⚠️)
+- **Current Image:** `hoopstreet/tiktok-video-generator:latest-cuda`
+- **Size:** 334.3 GB (Critical)
+- **Observation:** Large size may impact RunPod cold-start times.
+- **Action:** Future builds should use `.dockerignore` to exclude `/static/music` or heavy model weights if they can be downloaded at runtime.
