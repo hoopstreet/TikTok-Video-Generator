@@ -81,3 +81,11 @@
     - CUDA environment initialized (CPU Fallback active for HF).
     - Port 7860 responding to Proxy Server.
 - **Lesson Learned:** Infrastructure "optimizations" must not move `dist/` or `tsc` steps out of the main image-baking pipeline until caching layers are fully understood.
+
+## PHASE 6.0: HYBRID PRODUCTION STABILITY 🚀
+- **Strategy:** Combined v2.0.0 Stable Engine with Phase 5 Automation.
+- **Upgrades Integrated:**
+    - ✅ **Supabase Edge Janitor:** Daily 24h rolling cleanup (Automated).
+    - ✅ **Lean HF Sync:** Orphan-style push to keep Space storage optimized.
+    - ✅ **S3 Persistence:** Video storage decoupled from container lifecycle.
+- **Infrastructure:** Local (iSH) -> GitHub -> [Supabase / Docker Hub / HF Space].

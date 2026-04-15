@@ -1,0 +1,15 @@
+name: Sync to Hugging Face
+on:
+  push:
+    branches: [main]
+    paths: ['Dockerfile', 'README.md', 'ROADMAP_DNA.md']
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with: { fetch-depth: 0 }
+      - name: Push to HF
+        run: |
+          git remote add hf https://hoopstreet:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/hoopstreet/TikTok-Video-Generator
+          git push hf main --force

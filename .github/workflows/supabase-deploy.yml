@@ -1,0 +1,12 @@
+name: Deploy Supabase Janitor
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**']
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: supabase/setup-cli@v1
+      - run: supabase functions deploy janitor --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
