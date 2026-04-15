@@ -1,26 +1,41 @@
-# 🧬 TikTok-Video-Generator: ROADMAP DNA
-**Stable Baseline:** v1.9.1-stable  
-**Last Updated:** 2026-04-15  
+# 🧬 TikTok-Video-Generator: ROADMAP DNA & BLUEPRINT
 
-## 🏗️ Core Infrastructure Mapping
-- **Source of Truth:** [GitHub](https://github.com/hoopstreet/TikTok-Video-Generator)
-- **Image Registry:** [Docker Hub](https://hub.docker.com/repository/docker/hoopstreet/tiktok-video-generator)
-- **Web Interface:** [Hugging Face Space](https://huggingface.co/spaces/hoopstreet/TikTok-Video-Generator)
-- **Compute (GPU):** [RunPod Serverless](https://console.runpod.io/serverless/user/endpoint/zoucgz75ukln9s)
-- **Storage:** [Hugging Face Bucket (S3)](https://huggingface.co/buckets/hoopstreet/TikTok-Video-Storage)
-- **Database:** [Supabase (TikTok-Video-Table)](https://supabase.com/dashboard/project/ixdukafvxqermhgoczou)
+## 🔑 Service Registry (Credentials & Endpoints)
+- **GitHub Master:** `hoopstreet/TikTok-Video-Generator`
+- **Docker Hub Repository:** `hoopstreet/tiktok-video-generator`
+- **Hugging Face UI Space:** `hoopstreet/TikTok-Video-Generator`
+- **Hugging Face Storage:** `hoopstreet/TikTok-Video-Storage` (S3 Mounted)
+- **Supabase Project ID:** `ixdukafvxqermhgoczou`
+- **RunPod Endpoint:** `zoucgz75ukln9s`
 
-## 🛠️ Build & Stability Rules (v1.9.1+)
-1. **The dist/ui Path:** The server is hardcoded to look for the UI in `dist/ui/`. 
-2. **Babel Runtime:** Browsers compile `.tsx` on-the-fly via Babel CDN to avoid heavy iSH builds.
-3. **Trigger Flow:** - Push to GitHub -> GitHub Actions -> Docker Hub Build.
-   - Hugging Face & RunPod pull the `latest` tag from Docker Hub.
-4. **Hugging Face Presence:** Only `Dockerfile` and `README.md` are synced directly; the rest runs from the Docker image.
+| Secret Variable | Service | Usage |
+| :--- | :--- | :--- |
+| `HF_TOKEN` | Hugging Face | Pull/Push for Space and S3 Bucket |
+| `SUPABASE_URL` | Supabase | Database Endpoint Connection |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Master Administrative Access |
+| `RUNPOD_API_KEY` | RunPod | Serverless Video Generation Trigger |
 
-## 🚀 Automation Nodes
-- **n8n:** Connected to Hugging Face for automated triggers.
-- **RunPod Serverless:** Handles the final video generation via API calls from HF/n8n.
+---
 
-## 📂 Data Storage (Public Schema)
-- **Table:** `Videos`
-- **Fields:** `video_id`, `status`, `s3_url`, `timestamp`
+## 📈 Evolution Phases (Changelog)
+
+### Phase 1: Infrastructure & Stability (v1.1.3 - v1.9.1)
+- **Status:** COMPLETED ✅
+- **Milestone:** Resolved the "Blank Screen" via `dist/ui` folder alignment.
+- **Tech Stack:** Dockerized Node.js, Babel Standalone (browser-side TSX), Express.
+- **Key Logic:** Bypassed iSH memory limits by offloading UI compilation to the client.
+
+### Phase 2: Cloud Integration & Automation (Current)
+- **Status:** ACTIVE 🛠️
+- **Focus:** Connecting the "Golden Thread" between n8n, Hugging Face, and RunPod.
+- **Milestone:** Established `SUPABASE_SERVICE_ROLE_KEY` for backend data persistence.
+- **Storage:** Successfully mounted S3 bucket to Hugging Face for video persistence.
+
+---
+
+## 🏗️ Technical Mapping
+- **UI Path:** `dist/ui` (Hardcoded requirement for v1.1.3 logic).
+- **Video Storage Flow:** RunPod (Gen) -> HF S3 Bucket (Save) -> Supabase `Videos` Table (Log).
+- **Trigger Logic:** 1. User/n8n hits Hugging Face UI.
+  2. HF sends task to RunPod Serverless API.
+  3. RunPod processes via CUDA 12.3.1 (Docker Hub Image).
