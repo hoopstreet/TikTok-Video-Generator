@@ -39,3 +39,8 @@
 - **Trigger Logic:** 1. User/n8n hits Hugging Face UI.
   2. HF sends task to RunPod Serverless API.
   3. RunPod processes via CUDA 12.3.1 (Docker Hub Image).
+
+### Phase 3: Automation Orchestration (Upcoming)
+- **Status:** INITIALIZING 🚦
+- **Focus:** Building the n8n Workflow nodes to trigger RunPod via Hugging Face.
+- **Goal:** Fully hands-free video generation from TikTok shop scrapers to Supabase logs.

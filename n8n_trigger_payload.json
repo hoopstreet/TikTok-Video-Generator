@@ -1,0 +1,10 @@
+{
+  "job_type": "create_video",
+  "template_id": "v1.9.1-stable",
+  "payload": {
+    "title": "Automated TikTok Test",
+    "image_url": "https://huggingface.co/buckets/hoopstreet/TikTok-Video-Storage/assets/placeholder.jpg",
+    "script_text": "This is an automated test from n8n to RunPod.",
+    "callback_url": "https://ixdukafvxqermhgoczou.supabase.co/rest/v1/videos"
+  }
+}
