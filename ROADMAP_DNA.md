@@ -35,7 +35,7 @@
 
 ## 🏗️ Technical Mapping
 - **UI Path:** `dist/ui` (Hardcoded requirement for v1.1.3 logic).
-- **Video Storage Flow:** RunPod (Gen) -> HF S3 Bucket (Save) -> Supabase `Videos` Table (Log).
+- **Video Storage Flow:** RunPod (Gen) -> HF S3 Bucket (Save) -> Supabase `videos` Table (Log).
 - **Trigger Logic:** 1. User/n8n hits Hugging Face UI.
   2. HF sends task to RunPod Serverless API.
   3. RunPod processes via CUDA 12.3.1 (Docker Hub Image).
