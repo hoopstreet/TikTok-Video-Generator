@@ -9,7 +9,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with: { fetch-depth: 0 }
-      - name: Push to HF
+      
+      - name: Push to HF (Orphan Style)
         run: |
+          # Create a temporary branch to avoid messing with main
+          git checkout --orphan hf-deploy
+          
+          # Remove everything from the git index
+          git rm -rf --cached .
+          
+          # Only add the absolute essentials for the Space to run
+          git add Dockerfile README.md ROADMAP_DNA.md
+          
+          git config user.name "Charles Tanauan (Alextzy)"
+          git config user.email "charles@hoopstreet.space"
+          git commit -m "Deploy: Lean infrastructure update"
+          
+          # Force push only these 3 files to HF
           git remote add hf https://hoopstreet:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/hoopstreet/TikTok-Video-Generator
-          git push hf main --force
+          git push hf hf-deploy:main --force

@@ -89,3 +89,9 @@
     - ✅ **Lean HF Sync:** Orphan-style push to keep Space storage optimized.
     - ✅ **S3 Persistence:** Video storage decoupled from container lifecycle.
 - **Infrastructure:** Local (iSH) -> GitHub -> [Supabase / Docker Hub / HF Space].
+
+### Phase 6.01: LFS Bypass & Asset Pruning 🎸
+- **Issue:** HF rejected push due to >10MB MP3 files in `static/music/`.
+- **Fix:** Upgraded `hf-sync.yml` to an **Orphan Push** strategy.
+- **Logic:** The workflow now strips all binary assets and only sends `Dockerfile`, `README`, and `DNA` to Hugging Face.
+- **Result:** Space remains <1MB while the full source (including music) stays safe on GitHub.
