@@ -1,14 +1,17 @@
 {
-  "project_source": "TikTok-Prompt-Generator",
+  "source_project": "TikTok-Prompt-Generator",
+  "external_ref_id": "product_scraper_id_001",
   "scenes": [
     {
-      "text": "Check out this amazing budol find! Best quality and affordable.",
-      "negative_prompt": "blurry, low quality, distorted text, watermark",
-      "image_url": "https://p16-oec-va.ibyteimg.com/tos-maliva-i-o3syd03w52-us/d5950928af544916a09eca3f684b036c~tplv-o3syd03w52-resize-webp:260:260.webp"
+      "text": "SCENE_1_POSITIVE_PROMPT",
+      "negative_prompt": "SCENE_1_NEGATIVE_PROMPT",
+      "image_url": "WEB_P_URL_FROM_SCRAPER"
     }
   ],
   "config": {
     "voice": "fish_ate_budol",
-    "music_mood": "excited"
+    "music_mood": "excited",
+    "output_storage": "huggingface_s3",
+    "db_logging": "supabase_video_table"
   }
 }

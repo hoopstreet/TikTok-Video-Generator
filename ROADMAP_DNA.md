@@ -59,3 +59,12 @@
 ### Phase 4.1: Inter-Project Handshake
 - **Status:** ACTIVE 🛠️
 - **Target:** Ensure the Video-Generator correctly parses prompts from the Prompt-Generator project.
+
+## 🗄️ Database Schema Relationships (Supabase)
+- **Table: TikTok-Product-Table** -> Primary Key: `product_id`
+- **Table: TikTok-Prompt-Table** -> Foreign Key: `product_id`, Primary Key: `prompt_id`
+- **Table: TikTok-Video-Table** -> Foreign Key: `prompt_id`, Primary Key: `video_id`
+
+## 🔗 Integrated Triggers
+1. **Manual:** Hugging Face Web UI (Direct to RunPod)
+2. **Automated:** n8n HTTP Node (Triggered by Prompt-Generator completion)
