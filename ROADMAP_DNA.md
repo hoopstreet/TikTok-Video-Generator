@@ -59,3 +59,9 @@
 - **Header:** `Content-Type` → `application/json`
 
 ---
+
+### [2026-04-16] RELEASE v2.4.0
+- **Handshake:** Resolved RunPod 'Unknown' status mapping.
+- **Persistence:** Successfully symlinked S3 storage to Home UI list.
+- **Cleanup:** Redundant Dockerfiles removed; project root optimized.
+- **Status:** Verified "Golden Thread" from UI to S3.
