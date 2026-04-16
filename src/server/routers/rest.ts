@@ -40,7 +40,7 @@ restRouter.get("/video-status/:id", async (req, res) => {
   );
   res.json({ 
     status: response.data.status === "COMPLETED" ? "ready" : "processing",
-    url: response.data.output 
+    url: response.data.output?.video_url || response.data.output 
   });
 });
 // Build Trigger: Sun Apr 12 14:38:11 UTC 2026

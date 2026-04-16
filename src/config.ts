@@ -58,7 +58,7 @@ export class Config {
     this.libsDirPath = path.join(this.dataDirPath, "libs");
 
     this.whisperInstallPath = path.join(this.libsDirPath, "whisper");
-    this.videosDirPath = path.join(this.dataDirPath, "videos");
+    this.videosDirPath = "/app/data/storage";
     this.tempDirPath = path.join(this.dataDirPath, "temp");
     this.installationSuccessfulPath = path.join(
       this.dataDirPath,
