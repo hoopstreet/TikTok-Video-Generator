@@ -26,3 +26,36 @@
 ## 🛡️ MAINTENANCE
 - **Janitor:** Supabase Edge Function handles 24h rolling cleanup of database rows.
 - **Integrity:** `production_check.sh` ensures `dist/index.js` exists in every build.
+
+## 🔑 CREDENTIALS MASTER REGISTRY (v2.4.0)
+*Use this guide to verify or rotate keys in your service dashboards.*
+
+### 1. GitHub Secrets & Variables
+**Location:** `Settings > Secrets and Variables > Actions`
+- **Secret:** `DOCKERHUB_TOKEN` → [Your Docker Hub PAT]
+- **Secret:** `HF_TOKEN` → [Your Hugging Face Write Token]
+- **Secret:** `SUPABASE_PROJECT_ID` → `ixdukafvxqermhgoczou`
+- **Secret:** `SUPABASE_SERVICE_ROLE_KEY` → [Your Supabase Service Role Key]
+- **Variable:** `DOCKERHUB_USERNAME` → `hoopstreet`
+
+### 2. Hugging Face Space Settings
+**Location:** `Settings > Variables and Secrets`
+- **Secret:** `RUNPOD_API_KEY` → [Your RunPod API Key]
+- **Secret:** `SUPABASE_URL` → `https://ixdukafvxqermhgoczou.supabase.co`
+- **Variable:** `RUNPOD_ENDPOINT_ID` → `zoucgz75ukln9s`
+- **Variable:** `APP_MODE` → `WEB`
+- **Variable:** `PORT` → `7860`
+
+### 3. RunPod Serverless Template
+**Location:** `Serverless > Templates > Edit`
+- **Container Image:** `hoopstreet/tiktok-video-generator:latest-cuda`
+- **Env Var:** `SUPABASE_URL` → `https://ixdukafvxqermhgoczou.supabase.co`
+- **Env Var:** `SUPABASE_SERVICE_ROLE_KEY` → [Same as GitHub Secret]
+- **Env Var:** `S3_MOUNT_PATH` → `/app/data/storage`
+
+### 4. n8n HTTP Node Headers
+**Location:** `TikTok-Video-Generator Node`
+- **Header:** `Authorization` → `Bearer [HF_TOKEN]`
+- **Header:** `Content-Type` → `application/json`
+
+---
