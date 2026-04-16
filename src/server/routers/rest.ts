@@ -44,3 +44,23 @@ restRouter.get("/video-status/:id", async (req, res) => {
   });
 });
 // Build Trigger: Sun Apr 12 14:38:11 UTC 2026
+
+// Route to list persistent videos for the Home UI
+restRouter.get("/videos", async (req, res) => {
+  const fs = require("fs");
+  const path = require("path");
+  const videosDir = path.join(__dirname, "../../../data/videos");
+  
+  if (!fs.existsSync(videosDir)) return res.json([]);
+  
+  const files = fs.readdirSync(videosDir)
+    .filter((file: string) => file.endsWith(".mp4"))
+    .map((file: string) => ({
+      id: file,
+      url: `/videos/${file}`,
+      timestamp: fs.statSync(path.join(videosDir, file)).mtime
+    }))
+    .sort((a: any, b: any) => b.timestamp - a.timestamp);
+
+  res.json(files);
+});

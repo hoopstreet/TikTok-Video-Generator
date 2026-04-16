@@ -10,6 +10,7 @@ const uiPath = path.join(process.cwd(), "dist/ui");
 
 // 1. Serve UI
 app.use(express.static(uiPath));
+app.use("/videos", express.static(path.join(__dirname, "../../data/videos")));
 
 // 2. Connect the Proxy Router
 app.use("/api", restRouter);
